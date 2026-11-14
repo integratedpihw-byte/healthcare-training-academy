@@ -4,7 +4,7 @@
  */
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
-import { CERTIFICATE_LOGO_ASPECT, CERTIFICATE_LOGO_JPEG_BASE64 } from "./logo-data";
+import { CERTIFICATE_LOGO_ASPECT, CERTIFICATE_LOGO_JPEG_BASE64, CERTIFICATE_SEAL_PNG_BASE64 } from "./logo-data";
 import { ACADEMY_NAME, CERTIFICATE_DISCLAIMER, effectiveStatus, verificationUrl, type EffectiveStatus } from "./service";
 
 const NAVY = rgb(11 / 255, 37 / 255, 69 / 255);
@@ -100,6 +100,10 @@ export async function renderCertificatePdf(c: CertificatePdfData): Promise<Uint8
   detail("Certificate number", c.certificateNumber);
   detail(c.expiresOn ? "Valid through" : "Expiration", c.expiresOn ? fmt(c.expiresOn) : "No expiration set for this course");
 
+  // CHITA badge as the certificate seal, above the issuing authority
+  const seal = await pdf.embedPng(Buffer.from(CERTIFICATE_SEAL_PNG_BASE64, "base64"));
+  page.drawImage(seal, { x: 300 + 115 - 36, y: 176, width: 72, height: 72 });
+
   // Issuing authority (center-right)
   const ix = 300;
   page.drawLine({ start: { x: ix, y: 152 }, end: { x: ix + 230, y: 152 }, thickness: 0.8, color: SLATE });
@@ -114,7 +118,11 @@ export async function renderCertificatePdf(c: CertificatePdfData): Promise<Uint8
   page.drawImage(qr, { x: W - 70 - 96, y: 92, width: 96, height: 96 });
   const vText = "Verify this certificate";
   page.drawText(vText, { x: W - 70 - 96, y: 80, size: 8, font: sansBold, color: NAVY });
-  page.drawText(url.replace(/^https?:\/\//, ""), { x: W - 70 - 96 - 40, y: 68, size: 7, font: sans, color: SLATE, maxWidth: 200 });
+  // Right-aligned under the QR code and shrunk if needed, so long addresses stay inside the border.
+  const shown = url.replace(/^https?:\/\//, "");
+  let us = 7;
+  while (us > 5 && sans.widthOfTextAtSize(shown, us) > 250) us -= 0.25;
+  page.drawText(shown, { x: W - 70 - sans.widthOfTextAtSize(shown, us), y: 68, size: us, font: sans, color: SLATE });
   page.drawText(`Code: ${c.verificationCode}`, { x: W - 70 - 96, y: 58, size: 8, font: sans, color: SLATE });
 
   // Disclaimer

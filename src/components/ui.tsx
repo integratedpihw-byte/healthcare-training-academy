@@ -167,18 +167,18 @@ const LOGO_WIDTH = { sm: 120, md: 156, lg: 204, xl: 300 } as const;
 /**
  * The academy logo (green and gold artwork with a transparent background).
  * `light` means "on a dark surface": the logo is set on a white plate so it stays legible.
- * `variant="mark"` shows only the emblem, for tight spaces such as the phone header.
+ * `variant="mark"` shows the round CHITA badge, for tight spaces such as the phone header.
  */
 export const PRODUCT_NAME = "Complete Healthcare Innovative Training Academy";
 
 export function Logo({ light = false, size = "md", variant = "full" }: { light?: boolean; size?: keyof typeof LOGO_WIDTH; variant?: "full" | "mark" }) {
   const img =
     variant === "mark" ? (
-      <Image src={emblemImage} alt={PRODUCT_NAME} width={36} height={36} unoptimized priority />
+      <Image src={emblemImage} alt="CHITA" width={40} height={40} unoptimized priority className="rounded-full" />
     ) : (
       <Image src={logoImage} alt={PRODUCT_NAME} width={LOGO_WIDTH[size]} height={Math.round((LOGO_WIDTH[size] * logoImage.height) / logoImage.width)} unoptimized priority />
     );
-  return <span className={cn("inline-flex items-center", light && "rounded-lg bg-white shadow-sm", light && (variant === "mark" ? "p-1" : "px-3 py-2"))}>{img}</span>;
+  return <span className={cn("inline-flex items-center", light && "bg-white shadow-sm", light && (variant === "mark" ? "rounded-full p-0.5" : "rounded-lg px-3 py-2"))}>{img}</span>;
 }
 
 export const FACILITY_TYPE_LABELS: Record<string, string> = {

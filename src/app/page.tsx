@@ -1,3 +1,5 @@
+import Image from "next/image";
+import badgeImage from "@/assets/brand/badge.webp";
 import { SiteFooter } from "@/components/site-footer";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/context";
@@ -21,13 +23,16 @@ export default async function Home() {
       </header>
       <main id="main">
         <section className="bg-gradient-to-b from-sky-50 to-white">
-          <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 lg:grid-cols-[1fr_auto]">
+            <div>
             <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-navy-900 sm:text-5xl">Healthcare workforce training, competency and compliance — in one platform.</h1>
             <p className="mt-5 max-w-2xl text-lg text-slate-600">Onboard staff, assign the right training for each facility and role, validate hands-on competencies and stay audit-ready. Built for Florida first, designed for all 50 states.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href="/register">Start a 14-day trial</ButtonLink>
               <ButtonLink href="/register/individual" variant="secondary">I&apos;m an individual learner</ButtonLink>
             </div>
+            </div>
+            <Image src={badgeImage} alt="CHITA — Complete Healthcare Innovative Training Academy badge" width={300} height={300} priority unoptimized className="mx-auto hidden h-auto w-72 drop-shadow-xl sm:block lg:w-80" />
           </div>
         </section>
         <section className="mx-auto max-w-6xl px-6 py-14">
