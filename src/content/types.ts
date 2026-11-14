@@ -74,4 +74,4 @@ export interface CourseContent {
 }
 
 export const AUTHOR_NOTE =
-  "Complete Healthcare Training Academy content team (AI-assisted draft — requires review by a qualified subject-matter expert before use)";
+  "Complete Healthcare Innovative Training Academy content team (AI-assisted draft — requires review by a qualified subject-matter expert before use)";

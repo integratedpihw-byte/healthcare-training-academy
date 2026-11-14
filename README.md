@@ -1,4 +1,4 @@
-# Complete Healthcare Training Academy
+# Complete Healthcare Innovative Training Academy
 
 Multi-tenant healthcare education, LMS, workforce training and regulatory compliance SaaS platform.
 Florida first, with an architecture built to cover all 50 states.

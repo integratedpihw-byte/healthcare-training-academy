@@ -11,7 +11,7 @@ export default function TermsPage() {
   return (
     <>
       <h1 className="text-2xl font-bold text-navy-900">Terms of Service</h1>
-      <p>Effective {EFFECTIVE}. These terms govern use of Complete Healthcare Training Academy (the &ldquo;Service&rdquo;), operated by {entity}.</p>
+      <p>Effective {EFFECTIVE}. These terms govern use of Complete Healthcare Innovative Training Academy (the &ldquo;Service&rdquo;), operated by {entity}.</p>
 
       <h2>1. The Service</h2>
       <p>The Service provides workforce training, competency records and compliance tracking for healthcare organizations and individual learners. It is an education and record-keeping tool. It does not provide medical, legal or regulatory advice, and it does not replace your organization&rsquo;s own policies or the judgment of licensed professionals.</p>

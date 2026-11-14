@@ -297,8 +297,8 @@ export async function sendPasswordLink(db: Db, userId: string, email: string, ki
   const url = `${process.env.APP_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
   await sendEmail(
     kind === "invite"
-      ? { to: email, subject: "You have been invited to Complete Healthcare Training Academy", text: `Your organization added you to Complete Healthcare Training Academy.\n\nSet your password (link valid 72 hours):\n${url}` }
-      : { to: email, subject: "Reset your Complete Healthcare Training Academy password", text: `A password reset was requested for your account.\n\nReset link (valid ${RESET_TOKEN_MINUTES} minutes):\n${url}\n\nIf you did not request this, you can ignore this email.` },
+      ? { to: email, subject: "You have been invited to Complete Healthcare Innovative Training Academy", text: `Your organization added you to Complete Healthcare Innovative Training Academy.\n\nSet your password (link valid 72 hours):\n${url}` }
+      : { to: email, subject: "Reset your Complete Healthcare Innovative Training Academy password", text: `A password reset was requested for your account.\n\nReset link (valid ${RESET_TOKEN_MINUTES} minutes):\n${url}\n\nIf you did not request this, you can ignore this email.` },
   );
 }
 

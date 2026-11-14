@@ -22,7 +22,7 @@ export function composeEmail(row: { subject: string; body: string; link: string 
   if (row.link) lines.push(`Open: ${appUrl(row.link)}`, "");
   lines.push(
     "—",
-    "Complete Healthcare Training Academy",
+    "Complete Healthcare Innovative Training Academy",
     `Manage your email preferences: ${appUrl("/settings/notifications")}`,
     "This message was sent automatically. Do not reply with personal health information.",
   );

@@ -168,7 +168,7 @@ export function Logo({ light = false }: { light?: boolean }) {
       </svg>
       <span className={cn("leading-tight", light ? "text-white" : "text-navy-900")}>
         <span className="block text-sm font-bold tracking-tight">Complete Healthcare</span>
-        <span className="block text-[11px] font-medium uppercase tracking-[0.14em] opacity-80">Training Academy</span>
+        <span className="block whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] opacity-80">Innovative Training Academy</span>
       </span>
     </span>
   );

@@ -1,6 +1,6 @@
 import { generateSecret, generateSync, generateURI, verifySync } from "otplib";
 
-export const MFA_ISSUER = "Complete Healthcare Training Academy";
+export const MFA_ISSUER = "Complete Healthcare Innovative Training Academy";
 
 export function newTotpSecret(): string {
   return generateSecret();

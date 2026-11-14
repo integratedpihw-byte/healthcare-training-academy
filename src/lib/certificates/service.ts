@@ -19,7 +19,7 @@ import { sha256 } from "@/lib/auth/crypto";
 import { notify } from "@/lib/notify/notifications";
 import { rateLimit } from "@/lib/auth/rate-limit";
 
-export const ACADEMY_NAME = "Complete Healthcare Training Academy";
+export const ACADEMY_NAME = "Complete Healthcare Innovative Training Academy";
 export const CERTIFICATE_DISCLAIMER =
   "This certificate documents completion of an internal training course. It is not a state license, professional certification, or accredited continuing education credit.";
 

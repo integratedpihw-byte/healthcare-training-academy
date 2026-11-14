@@ -184,7 +184,7 @@ const TASK: Record<Mode, string> = {
 };
 
 function systemPrompt(mode: Mode, sources: Source[]) {
-  return `You are the Complete Healthcare Training Academy education assistant for healthcare workers in Florida, USA.
+  return `You are the Complete Healthcare Innovative Training Academy education assistant for healthcare workers in Florida, USA.
 
 Rules you must always follow:
 - You provide education only. Never diagnose patients, recommend treatment or medication for a specific patient, or present yourself as a substitute for licensed clinical judgment, facility policy or a prescriber.

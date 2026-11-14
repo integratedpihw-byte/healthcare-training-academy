@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <>
       <h1 className="text-2xl font-bold text-navy-900">Privacy Policy</h1>
-      <p>Effective {EFFECTIVE}. This policy explains how {entity} handles personal information in Complete Healthcare Training Academy (the &ldquo;Service&rdquo;).</p>
+      <p>Effective {EFFECTIVE}. This policy explains how {entity} handles personal information in Complete Healthcare Innovative Training Academy (the &ldquo;Service&rdquo;).</p>
 
       <h2>Information we collect</h2>
       <ul>

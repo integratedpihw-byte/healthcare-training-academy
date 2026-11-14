@@ -32,7 +32,7 @@ export default async function MaterialsPage({ params }: { params: Promise<{ enro
         <PrintButton />
       </div>
       <header className="border-b border-slate-200 pb-4">
-        <p className="text-xs uppercase tracking-wider text-teal-700">Complete Healthcare Training Academy · Course materials</p>
+        <p className="text-xs uppercase tracking-wider text-teal-700">Complete Healthcare Innovative Training Academy · Course materials</p>
         <h1 className="mt-1 text-2xl font-bold text-navy-900">{p.course.title}</h1>
         <p className="text-sm text-slate-600">{p.course.code} · Version {p.version.versionNumber} · Prepared for {ctx.user.firstName} {ctx.user.lastName}</p>
       </header>

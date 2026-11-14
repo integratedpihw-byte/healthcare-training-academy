@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Complete Healthcare Training Academy", template: "%s · Complete Healthcare Training Academy" },
+  title: { default: "Complete Healthcare Innovative Training Academy", template: "%s · Complete Healthcare Innovative Training Academy" },
   description: "Healthcare workforce training, competency validation and regulatory compliance management.",
   robots: { index: false },
 };

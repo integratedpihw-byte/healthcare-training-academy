@@ -1,6 +1,6 @@
 # Phase 5 — Regulatory Compliance: Completion Report
 
-**Project:** Complete Healthcare Training Academy
+**Project:** Complete Healthcare Innovative Training Academy
 **Phase:** 5 of 7 (Florida compliance engine, federal requirements, applicability rules, compliance dashboards, audit reports)
 **Date:** November 13, 2026
 

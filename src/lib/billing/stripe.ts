@@ -19,7 +19,7 @@ export function stripeConfigured() {
 }
 export function stripe(): Stripe {
   if (!process.env.STRIPE_SECRET_KEY) throw new Error("Stripe is not configured (STRIPE_SECRET_KEY).");
-  client ??= new Stripe(process.env.STRIPE_SECRET_KEY, { appInfo: { name: "Complete Healthcare Training Academy" } });
+  client ??= new Stripe(process.env.STRIPE_SECRET_KEY, { appInfo: { name: "Complete Healthcare Innovative Training Academy" } });
   return client;
 }
 

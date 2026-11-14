@@ -101,7 +101,7 @@ describe("certificates", () => {
     expect(effectiveStatus({ status: "REVOKED", expiresOn: "2030-01-01" }, "2026-11-13")).toBe("REVOKED");
   });
   it("renders a PDF with the verification QR code", async () => {
-    const bytes = await renderCertificatePdf({ certificateNumber: "CHTA-2026-ABCDEFGH", verificationCode: "ABCDEFGHJK", recipientName: "Jordan Lee", courseTitle: "OSHA Bloodborne Pathogens", courseCode: "CHTA-MC-004", completedOn: "2026-11-13", expiresOn: "2027-11-13", trainingHours: "1.25", issuingAuthority: "Complete Healthcare Training Academy on behalf of Sunshine Care Group", issuedAt: new Date(), status: "ACTIVE", kind: "COURSE_COMPLETION" });
+    const bytes = await renderCertificatePdf({ certificateNumber: "CHTA-2026-ABCDEFGH", verificationCode: "ABCDEFGHJK", recipientName: "Jordan Lee", courseTitle: "OSHA Bloodborne Pathogens", courseCode: "CHTA-MC-004", completedOn: "2026-11-13", expiresOn: "2027-11-13", trainingHours: "1.25", issuingAuthority: "Complete Healthcare Innovative Training Academy on behalf of Sunshine Care Group", issuedAt: new Date(), status: "ACTIVE", kind: "COURSE_COMPLETION" });
     expect(Buffer.from(bytes.slice(0, 5)).toString()).toBe("%PDF-");
     expect(bytes.length).toBeGreaterThan(5000);
   });

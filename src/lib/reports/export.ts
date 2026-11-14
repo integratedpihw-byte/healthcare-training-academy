@@ -39,7 +39,7 @@ export function toCsv(r: ReportResult): string {
 
 export async function toXlsx(r: ReportResult, generatedAt: Date, org: string): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Complete Healthcare Training Academy";
+  wb.creator = "Complete Healthcare Innovative Training Academy";
   wb.created = generatedAt;
   const ws = wb.addWorksheet(r.title.slice(0, 31).replace(/[\\/?*[\]:]/g, " "));
   ws.addRow([r.title]).font = { bold: true, size: 14 };
@@ -73,7 +73,7 @@ function fit(text: string, font: PDFFont, size: number, max: number): string {
 export async function toPdf(r: ReportResult, generatedAt: Date, org: string): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(r.title);
-  pdf.setCreator("Complete Healthcare Training Academy");
+  pdf.setCreator("Complete Healthcare Innovative Training Academy");
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const W = 792, H = 612, M = 36, size = 7.5, rowH = 12;
