@@ -36,6 +36,7 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("release: failed", e instanceof Error ? e.message : e);
+  const cause = e instanceof Error && e.cause instanceof Error ? ` — ${e.cause.message}` : "";
+  console.error("release: failed", e instanceof Error ? e.message.split("\n")[0] + cause : e);
   process.exitCode = 1;
 });
