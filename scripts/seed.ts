@@ -37,7 +37,8 @@ async function main() {
     for (const line of await seedDemoWorkforce(db)) console.log(`✓ DEMO workforce: ${line}`);
     for (const line of await seedDemoCompliance(db)) console.log(`✓ DEMO compliance: ${line}`);
     for (const line of await seedDemoEnterprise(db)) console.log(`✓ DEMO enterprise: ${line}`);
-    console.log(`  Demo password for all demo accounts: ${DEMO_PASSWORD}`);
+    // Never echo a custom (private) demo password into build logs.
+    console.log(process.env.SEED_DEMO_PASSWORD ? "  Demo accounts use the private SEED_DEMO_PASSWORD value." : `  Demo password for all demo accounts: ${DEMO_PASSWORD}`);
   }
 }
 

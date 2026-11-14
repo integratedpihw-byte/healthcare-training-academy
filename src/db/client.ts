@@ -17,10 +17,24 @@ function requireEnv(name: string): string {
   return v;
 }
 
+/**
+ * TLS: when DATABASE_CA_CERT (PEM) is set, the server certificate is verified against it
+ * (recommended in production — e.g. Supabase's project CA). Otherwise the connection
+ * string's sslmode applies.
+ */
+function sslOption() {
+  const ca = process.env.DATABASE_CA_CERT?.replace(/\\n/g, "\n");
+  return ca ? { ca, rejectUnauthorized: true } : undefined;
+}
+
 function pools(): Pools {
   if (!g.__chtaPools) {
-    const app = new Pool({ connectionString: requireEnv("DATABASE_URL"), max: 10 });
-    const system = new Pool({ connectionString: requireEnv("SYSTEM_DATABASE_URL"), max: 5 });
+    // Serverless hosts run many small instances: keep per-instance pools small and
+    // point the URLs at a transaction-mode pooler (e.g. Supabase Supavisor, port 6543).
+    const max = Number(process.env.DB_POOL_MAX ?? 10);
+    const ssl = sslOption();
+    const app = new Pool({ connectionString: requireEnv("DATABASE_URL"), max, ssl });
+    const system = new Pool({ connectionString: requireEnv("SYSTEM_DATABASE_URL"), max: Math.max(2, Math.ceil(max / 2)), ssl });
     g.__chtaPools = {
       app,
       system,
