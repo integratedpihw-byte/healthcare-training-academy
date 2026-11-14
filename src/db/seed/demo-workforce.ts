@@ -28,9 +28,9 @@ export async function seedDemoWorkforce(sys: Db): Promise<string[]> {
   const [admin] = await sys.select().from(users).where(eq(users.email, "orgadmin@sunshine.example"));
   const course = async (code: string) => (await sys.select({ id: courses.id, status: courses.status }).from(courses).where(and(isNull(courses.tenantId), eq(courses.code, code))))[0];
   const [hh] = await sys.select({ id: competencies.id }).from(competencies).where(and(isNull(competencies.tenantId), eq(competencies.code, "COMP-HH")));
-  const hipaa = await course("CHTA-MC-001");
-  const bbp = await course("CHTA-MC-004");
-  const sp = await course("CHTA-MC-006");
+  const hipaa = await course("CHITA-MC-001");
+  const bbp = await course("CHITA-MC-004");
+  const sp = await course("CHITA-MC-006");
   const today = todayIso();
 
   await withTenant({ tenantId: t.id, userId: admin.id }, async (tx) => {

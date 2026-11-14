@@ -1,4 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
+import logoImage from "@/assets/brand/logo.webp";
+import emblemImage from "@/assets/brand/emblem.webp";
 import { clsx } from "clsx";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -159,19 +162,23 @@ export function DemoBanner({ show }: { show: boolean }) {
   );
 }
 
-export function Logo({ light = false }: { light?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <svg aria-hidden viewBox="0 0 32 32" className="h-8 w-8">
-        <rect width="32" height="32" rx="8" fill={light ? "#ffffff" : "#0b2545"} />
-        <path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#13a3b0" />
-      </svg>
-      <span className={cn("leading-tight", light ? "text-white" : "text-navy-900")}>
-        <span className="block text-sm font-bold tracking-tight">Complete Healthcare</span>
-        <span className="block whitespace-nowrap text-[10px] font-medium uppercase tracking-[0.08em] opacity-80">Innovative Training Academy</span>
-      </span>
-    </span>
-  );
+const LOGO_WIDTH = { sm: 120, md: 156, lg: 204, xl: 300 } as const;
+
+/**
+ * The academy logo (green and gold artwork with a transparent background).
+ * `light` means "on a dark surface": the logo is set on a white plate so it stays legible.
+ * `variant="mark"` shows only the emblem, for tight spaces such as the phone header.
+ */
+export const PRODUCT_NAME = "Complete Healthcare Innovative Training Academy";
+
+export function Logo({ light = false, size = "md", variant = "full" }: { light?: boolean; size?: keyof typeof LOGO_WIDTH; variant?: "full" | "mark" }) {
+  const img =
+    variant === "mark" ? (
+      <Image src={emblemImage} alt={PRODUCT_NAME} width={36} height={36} unoptimized priority />
+    ) : (
+      <Image src={logoImage} alt={PRODUCT_NAME} width={LOGO_WIDTH[size]} height={Math.round((LOGO_WIDTH[size] * logoImage.height) / logoImage.width)} unoptimized priority />
+    );
+  return <span className={cn("inline-flex items-center", light && "rounded-lg bg-white shadow-sm", light && (variant === "mark" ? "p-1" : "px-3 py-2"))}>{img}</span>;
 }
 
 export const FACILITY_TYPE_LABELS: Record<string, string> = {

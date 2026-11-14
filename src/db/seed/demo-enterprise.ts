@@ -18,8 +18,8 @@ export async function seedDemoEnterprise(sys: Db): Promise<string[]> {
   if (already) return done;
   const byEmail = async (e: string) => (await sys.select().from(users).where(eq(users.email, e)))[0];
   const [daniel, director, grace, jordan] = await Promise.all(["instructor@sunshine.example", "director@sunshine.example", "supervisor@sunshine.example", "learner@sunshine.example"].map(byEmail));
-  const [hipaa] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-001")));
-  const [bbp] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-004")));
+  const [hipaa] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-001")));
+  const [bbp] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-004")));
   const [alf] = await sys.select().from(facilities).where(and(eq(facilities.tenantId, t.id), eq(facilities.facilityType, "ASSISTED_LIVING_FACILITY")));
   if (!daniel || !director || !grace || !jordan || !hipaa) return done;
 

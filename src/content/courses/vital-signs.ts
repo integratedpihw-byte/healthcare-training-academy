@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const vitalSigns: CourseContent = {
-  code: "CHTA-CP-001",
+  code: "CHITA-CP-001",
   title: "Vital Signs: Measurement, Accuracy and Reporting",
   categorySlug: "clinical-patient-care",
   isRequiredByDefault: false,

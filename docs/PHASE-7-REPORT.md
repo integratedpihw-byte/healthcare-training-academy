@@ -26,18 +26,18 @@ Twelve new courses were added.
 
 | # | Code | Course | Exam questions |
 |---|---|---|---:|
-| 3 | CHTA-MC-005 | Infection Prevention and Control | 15 |
-| 5 | CHTA-MC-007 | Recognizing and Reporting Abuse, Neglect and Exploitation | 15 |
-| 6 | CHTA-MC-008 | Patient and Resident Rights | 15 |
-| 7 | CHTA-MC-009 | Emergency Preparedness | 15 |
-| 8 | CHTA-MM-001 | Medication Safety Fundamentals | 15 |
-| 9 | CHTA-CP-001 | Vital Signs | 15 |
-| 10 | CHTA-CP-002 | Fall Prevention and Post-Fall Response | 15 |
-| 11 | CHTA-CP-003 | Clinical Documentation Essentials | 15 |
-| 12 | CHTA-HIV-001 | HIV/AIDS Fundamentals for Florida Healthcare Workers | 15 |
-| 13 | CHTA-HIV-002 | PrEP and PEP Fundamentals | 15 |
-| 14 | CHTA-LAB-001 | Laboratory Specimen Collection and Handling | 15 |
-| 15 | CHTA-FP-001 | Florida ALF Staff Orientation (120 minutes) | 15 |
+| 3 | CHITA-MC-005 | Infection Prevention and Control | 15 |
+| 5 | CHITA-MC-007 | Recognizing and Reporting Abuse, Neglect and Exploitation | 15 |
+| 6 | CHITA-MC-008 | Patient and Resident Rights | 15 |
+| 7 | CHITA-MC-009 | Emergency Preparedness | 15 |
+| 8 | CHITA-MM-001 | Medication Safety Fundamentals | 15 |
+| 9 | CHITA-CP-001 | Vital Signs | 15 |
+| 10 | CHITA-CP-002 | Fall Prevention and Post-Fall Response | 15 |
+| 11 | CHITA-CP-003 | Clinical Documentation Essentials | 15 |
+| 12 | CHITA-HIV-001 | HIV/AIDS Fundamentals for Florida Healthcare Workers | 15 |
+| 13 | CHITA-HIV-002 | PrEP and PEP Fundamentals | 15 |
+| 14 | CHITA-LAB-001 | Laboratory Specimen Collection and Handling | 15 |
+| 15 | CHITA-FP-001 | Florida ALF Staff Orientation (120 minutes) | 15 |
 
 **What each course includes:**
 - Description, audience, prerequisites and completion criteria

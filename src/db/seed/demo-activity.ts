@@ -41,14 +41,14 @@ export async function seedDemoActivity(sys: Db): Promise<string[]> {
   if (!t) return done;
   const [grace] = await sys.select().from(users).where(eq(users.email, "supervisor@sunshine.example"));
   const [jordan] = await sys.select().from(users).where(eq(users.email, "learner@sunshine.example"));
-  const [hipaa] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-001")));
+  const [hipaa] = await sys.select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-001")));
   if (!grace || !jordan || !hipaa) return done;
   const [existing] = await sys.select().from(enrollments).where(and(eq(enrollments.userId, grace.id), eq(enrollments.courseId, hipaa.id)));
   if (existing) return done;
 
   // 1) Grace: HIPAA lessons + exam with correct answers → completion + certificate
-  const enrollmentId = await completeLessons(t.id, grace.id, "CHTA-MC-001");
-  const content = LIBRARY.find((c) => c.code === "CHTA-MC-001")!;
+  const enrollmentId = await completeLessons(t.id, grace.id, "CHITA-MC-001");
+  const content = LIBRARY.find((c) => c.code === "CHITA-MC-001")!;
   const key = new Map(content.finalExam.questions.map((q) => [q.prompt, q.correct]));
   const attemptId = await withTenant({ tenantId: t.id, userId: grace.id }, async (tx) => {
     const s = await startAttempt(tx, { tenantId: t.id, userId: grace.id }, enrollmentId);
@@ -63,7 +63,7 @@ export async function seedDemoActivity(sys: Db): Promise<string[]> {
   done.push(`Grace Kim passed HIPAA (certificate ${outcome.certificateId ? "issued" : "not issued"})`);
 
   // 2) Jordan: Standard Precautions lessons complete, exam pending
-  await completeLessons(t.id, jordan.id, "CHTA-MC-006");
+  await completeLessons(t.id, jordan.id, "CHITA-MC-006");
   done.push("Jordan Lee completed all Standard Precautions lessons (final exam pending)");
 
   // 3) Grace signs a hand hygiene evaluation for Ana Morales

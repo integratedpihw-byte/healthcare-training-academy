@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const clinicalDocumentation: CourseContent = {
-  code: "CHTA-CP-003",
+  code: "CHITA-CP-003",
   title: "Clinical Documentation Essentials",
   categorySlug: "clinical-patient-care",
   isRequiredByDefault: false,

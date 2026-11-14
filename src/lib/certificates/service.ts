@@ -33,7 +33,7 @@ export function randomCode(length: number) {
 }
 
 export function newCertificateNumber(date = new Date()) {
-  return `CHTA-${date.getUTCFullYear()}-${randomCode(8)}`;
+  return `CHITA-${date.getUTCFullYear()}-${randomCode(8)}`;
 }
 
 export function addMonths(isoDate: string, months: number): string {

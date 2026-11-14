@@ -5,6 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "Complete Healthcare Innovative Training Academy", template: "%s · Complete Healthcare Innovative Training Academy" },
   description: "Healthcare workforce training, competency validation and regulatory compliance management.",
+  applicationName: "Complete Healthcare Innovative Training Academy",
   robots: { index: false },
 };
 

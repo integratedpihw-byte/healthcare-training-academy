@@ -190,7 +190,7 @@ describe("examination engine", () => {
     expect(att.scorePct).toBe(100);
     expect(outcome.completed).toBe(true);
     const [cert] = await systemDb().select().from(certificates).where(eq(certificates.enrollmentId, enrollmentId));
-    expect(cert.certificateNumber).toMatch(/^CHTA-\d{4}-[A-Z2-9]{8}$/);
+    expect(cert.certificateNumber).toMatch(/^CHITA-\d{4}-[A-Z2-9]{8}$/);
     expect(cert.expiresOn).not.toBeNull();
     expect(cert.status).toBe("ACTIVE");
     expect((await issueForEnrollment(systemDb(), enrollmentId))?.created).toBe(false); // idempotent

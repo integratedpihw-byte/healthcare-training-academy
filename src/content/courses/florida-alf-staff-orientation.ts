@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const floridaAlfStaffOrientation: CourseContent = {
-  code: "CHTA-FP-001",
+  code: "CHITA-FP-001",
   title: "Florida Assisted Living Facility Staff Orientation",
   categorySlug: "facility-programs",
   isRequiredByDefault: false,

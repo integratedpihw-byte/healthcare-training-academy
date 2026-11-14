@@ -3,7 +3,7 @@ import type { CourseContent } from "../types";
 const ACCESSED = "2026-11-13";
 
 export const hipaaPrivacySecurity: CourseContent = {
-  code: "CHTA-MC-001",
+  code: "CHITA-MC-001",
   title: "HIPAA Privacy and Security for the Healthcare Workforce",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

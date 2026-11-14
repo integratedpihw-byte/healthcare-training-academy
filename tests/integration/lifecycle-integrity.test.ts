@@ -151,7 +151,7 @@ describe("certificate and competency integrity guards", () => {
   const cert = (enrollmentId: string, courseId: string, extra: Partial<typeof certificates.$inferInsert> = {}) => ({
     tenantId: T.tenantId, userId: T.adminUserId, courseId, enrollmentId, kind: "COURSE_COMPLETION" as const,
     certificateNumber: `C-${Math.random()}`, verificationCode: `V-${Math.random()}`, recipientName: "Ada Admin", courseTitle: "Test Course",
-    trainingHours: "1.00", issuingAuthority: "CHTA", completedOn: "2026-11-01", expiresOn: "2027-11-01", ...extra,
+    trainingHours: "1.00", issuingAuthority: "CHITA", completedOn: "2026-11-01", expiresOn: "2027-11-01", ...extra,
   });
 
   it("refuses a certificate until the enrollment is COMPLETED (mandatory assessment passed)", async () => {

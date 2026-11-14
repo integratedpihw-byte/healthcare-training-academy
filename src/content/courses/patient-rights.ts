@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const patientRights: CourseContent = {
-  code: "CHTA-MC-008",
+  code: "CHITA-MC-008",
   title: "Patient and Resident Rights",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

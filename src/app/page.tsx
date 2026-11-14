@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Logo />
+        <Logo size="lg" />
         <nav className="flex gap-2">
           <ButtonLink href="/login" variant="ghost">Sign in</ButtonLink>
           <ButtonLink href="/register" variant="teal">Register organization</ButtonLink>

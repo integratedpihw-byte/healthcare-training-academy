@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const fallPrevention: CourseContent = {
-  code: "CHTA-CP-002",
+  code: "CHITA-CP-002",
   title: "Fall Prevention and Post-Fall Response",
   categorySlug: "clinical-patient-care",
   isRequiredByDefault: false,

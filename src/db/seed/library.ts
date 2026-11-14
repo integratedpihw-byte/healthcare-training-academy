@@ -62,7 +62,7 @@ async function insertCourse(tx: Db, c: CourseContent) {
       targetAudience: c.targetAudience,
       prerequisites: c.prerequisites,
       regulatoryReferences: c.regulatoryReferences,
-      sourceReferences: [...c.sourceReferences, ...(c.renewalBasis ? [{ title: "Renewal basis", publisher: "CHTA", note: c.renewalBasis }] : [])],
+      sourceReferences: [...c.sourceReferences, ...(c.renewalBasis ? [{ title: "Renewal basis", publisher: "CHITA", note: c.renewalBasis }] : [])],
       completionCriteria: c.completionCriteria,
       authorName: AUTHOR_NOTE,
       clinicalReviewRequired: c.clinicalReviewRequired,

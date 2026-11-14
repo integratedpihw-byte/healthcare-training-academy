@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const prepPepFundamentals: CourseContent = {
-  code: "CHTA-HIV-002",
+  code: "CHITA-HIV-002",
   title: "PrEP and PEP Fundamentals for Healthcare Workers",
   categorySlug: "hiv-infectious-disease",
   isRequiredByDefault: false,
@@ -17,7 +17,7 @@ export const prepPepFundamentals: CourseContent = {
   description:
     "An overview of HIV pre-exposure prophylaxis (PrEP) and post-exposure prophylaxis (PEP) for clinical and support staff who educate, screen, refer or navigate patients. Covers who may benefit, current PrEP options (daily oral, every-2-month injectable cabotegravir and twice-yearly injectable lenacapavir), required HIV testing and follow-up, PEP timing and the 28-day course, occupational PEP, side effects, adherence support and referral pathways. Prescribing decisions belong to licensed prescribers following current CDC guidelines.",
   targetAudience: "Nurses, medical assistants, pharmacists and technicians, HIV testing counselors, patient navigators, case managers and clinic staff.",
-  prerequisites: ["CHTA-HIV-001"],
+  prerequisites: ["CHITA-HIV-001"],
   completionCriteria: "Complete all lessons and pass the final examination with 80% or higher. This course does not authorize prescribing or dispensing.",
   objectives: [
     "Distinguish PrEP from PEP and explain when each is used.",

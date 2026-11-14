@@ -132,7 +132,7 @@ export const RULES: RuleDef[] = [
     requiresBloodborneExposure: true, frequencyMonths: 12,
     frequencyText: "At least annually thereafter; annual training within one year of the previous training.",
     initialTimingText: "At the time of initial assignment to tasks where occupational exposure may take place.", initialDueDaysFromHire: 0,
-    status: "VERIFIED", verificationNote: "Paragraphs (g)(2)(i), (ii), (iv) and (v) confirmed on osha.gov.", suggestedCourseCodes: ["CHTA-MC-004"],
+    status: "VERIFIED", verificationNote: "Paragraphs (g)(2)(i), (ii), (iv) and (v) confirmed on osha.gov.", suggestedCourseCodes: ["CHITA-MC-004"],
   },
   {
     source: "osha-1200", category: "OSHA", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "OSHA",
@@ -160,7 +160,7 @@ export const RULES: RuleDef[] = [
     audienceText: "All members of a HIPAA covered entity's workforce. Applicability depends on covered-entity (or business associate) status — decide in the Compliance Center.",
     frequencyText: "No recurring interval specified. Annual refreshers are common practice, not a requirement of this paragraph.",
     initialTimingText: "New workforce members within a reasonable period of time after joining; affected members within a reasonable period after a material change in policies.",
-    status: "VERIFIED", verificationNote: "Paragraph (b)(1)–(b)(2) confirmed on eCFR (official).", suggestedCourseCodes: ["CHTA-MC-001"],
+    status: "VERIFIED", verificationNote: "Paragraph (b)(1)–(b)(2) confirmed on eCFR (official).", suggestedCourseCodes: ["CHITA-MC-001"],
   },
   {
     source: "hipaa-308", category: "HIPAA", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "HHS Office for Civil Rights",
@@ -169,7 +169,7 @@ export const RULES: RuleDef[] = [
     audienceText: "All workforce members (including management) of a covered entity or business associate.",
     frequencyText: "No interval specified; security reminders are to be 'periodic'.",
     initialTimingText: "Not specified.",
-    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHTA-MC-001"],
+    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHITA-MC-001"],
   },
   {
     source: "ocr-1557", category: "HHS_OCR", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "HHS Office for Civil Rights",
@@ -192,7 +192,7 @@ export const RULES: RuleDef[] = [
     facilityTypes: ["SKILLED_NURSING_FACILITY"],
     frequencyText: "No general interval stated; compliance and ethics training must be annual for operating organizations with five or more facilities (483.95(f)). Amount and frequency are otherwise based on the facility assessment.",
     initialTimingText: "Not specified as a day count.",
-    status: "VERIFIED", verificationNote: "Section 483.95 structure confirmed on eCFR (official).", suggestedCourseCodes: ["CHTA-MC-001", "CHTA-MC-006"],
+    status: "VERIFIED", verificationNote: "Section 483.95 structure confirmed on eCFR (official).", suggestedCourseCodes: ["CHITA-MC-001", "CHITA-MC-006"],
   },
   {
     source: "cms-48395", category: "CMS", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "CMS",
@@ -209,7 +209,7 @@ export const RULES: RuleDef[] = [
     audienceText: "All new and existing staff, individuals providing services under arrangement, and volunteers, consistent with their expected roles.",
     facilityTypes: ["SKILLED_NURSING_FACILITY"], frequencyMonths: 12,
     frequencyText: "At least annually.", initialTimingText: "Initial training for all new and existing staff (no day count stated).",
-    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHTA-MC-009"],
+    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHITA-MC-009"],
   },
   {
     source: "cms-48215", category: "CMS", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "CMS",
@@ -218,7 +218,7 @@ export const RULES: RuleDef[] = [
     audienceText: "All new and existing staff, individuals providing services under arrangement, and volunteers, consistent with their expected roles.",
     facilityTypes: ["HOSPITAL"], frequencyMonths: 24,
     frequencyText: "At least every 2 years.", initialTimingText: "Initial training for all new and existing staff (no day count stated).",
-    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHTA-MC-009"],
+    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHITA-MC-009"],
   },
   {
     source: "cms-484102", category: "CMS", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "CMS",
@@ -227,7 +227,7 @@ export const RULES: RuleDef[] = [
     audienceText: "All new and existing staff, individuals providing services under arrangement, and volunteers, consistent with their expected roles.",
     facilityTypes: ["HOME_HEALTH_AGENCY"], frequencyMonths: 24,
     frequencyText: "At least every 2 years.", initialTimingText: "Initial training for all new and existing staff (no day count stated).",
-    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHTA-MC-009"],
+    status: "VERIFIED", verificationNote: LII_NOTE, suggestedCourseCodes: ["CHITA-MC-009"],
   },
   {
     source: "cms-48480", category: "CMS", kind: "TRAINING_MANDATE", jurisdiction: "FEDERAL", agency: "CMS",
@@ -290,7 +290,7 @@ export const RULES: RuleDef[] = [
     requirementText: "CDC recommends job- or task-specific infection prevention education and training for healthcare personnel.",
     audienceText: "Healthcare personnel.", requiresClinicalExposure: true,
     frequencyText: "Not verified.", initialTimingText: "Not verified.",
-    status: "NEEDS_REVIEW", verificationNote: "Guidance page not yet reviewed for specific timing recommendations; listed for completeness. Guidance is not a legal mandate.", suggestedCourseCodes: ["CHTA-MC-006", "CHTA-MC-005"],
+    status: "NEEDS_REVIEW", verificationNote: "Guidance page not yet reviewed for specific timing recommendations; listed for completeness. Guidance is not a legal mandate.", suggestedCourseCodes: ["CHITA-MC-006", "CHITA-MC-005"],
   },
   // ---------------------------------------------------------------- Florida AHCA — assisted living
   {
@@ -299,7 +299,7 @@ export const RULES: RuleDef[] = [
     requirementText: "Preservice orientation of at least 2 hours; the employee and administrator sign a statement kept in the personnel record. The 1-hour s. 430.5025 training counts toward it if completed before resident interaction.",
     audienceText: "New assisted living facility employees who have not previously completed core training.", facilityTypes: ALF,
     frequencyText: "One time.", initialTimingText: "Before interacting with residents.", initialDueDaysFromHire: 0,
-    status: "VERIFIED", verificationNote: "Confirmed on leg.state.fl.us (official, 2026 statutes).", pendingChangeNote: SB1404, suggestedCourseCodes: ["CHTA-FP-001"],
+    status: "VERIFIED", verificationNote: "Confirmed on leg.state.fl.us (official, 2026 statutes).", pendingChangeNote: SB1404, suggestedCourseCodes: ["CHITA-FP-001"],
   },
   {
     source: "fac-59a-36-011", category: "AHCA", kind: "TRAINING_MANDATE", jurisdiction: "FL", agency: "AHCA",
@@ -307,7 +307,7 @@ export const RULES: RuleDef[] = [
     requirementText: "Minimum 1 hour of in-service training in infection control, including universal precautions and facility sanitation procedures.",
     audienceText: ALF_DIRECT_CARE, facilityTypes: ALF, requiresClinicalExposure: true,
     frequencyText: "Recurrence not stated.", initialTimingText: "Before providing personal care to residents.", initialDueDaysFromHire: 0,
-    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHTA-MC-006", "CHTA-MC-005"],
+    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHITA-MC-006", "CHITA-MC-005"],
   },
   {
     source: "fac-59a-36-011", category: "AHCA", kind: "TRAINING_MANDATE", jurisdiction: "FL", agency: "AHCA",
@@ -315,7 +315,7 @@ export const RULES: RuleDef[] = [
     requirementText: "Minimum 1 hour covering reporting adverse incidents and emergency procedures, including chain of command and staff roles in emergency evacuation.",
     audienceText: "Direct care staff of an assisted living facility.", facilityTypes: ALF, requiresClinicalExposure: true,
     frequencyText: "Recurrence not stated.", initialTimingText: "Within 30 days of employment.", initialDueDaysFromHire: 30,
-    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHTA-MC-009"],
+    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHITA-MC-009"],
   },
   {
     source: "fac-59a-36-011", category: "AHCA", kind: "TRAINING_MANDATE", jurisdiction: "FL", agency: "AHCA",
@@ -323,7 +323,7 @@ export const RULES: RuleDef[] = [
     requirementText: "Minimum 1 hour covering resident rights and recognizing and reporting abuse, neglect and exploitation.",
     audienceText: "Direct care staff of an assisted living facility who have not taken the core training.", facilityTypes: ALF, requiresClinicalExposure: true,
     frequencyText: "Recurrence not stated.", initialTimingText: "Within 30 days of employment.", initialDueDaysFromHire: 30,
-    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHTA-MC-007", "CHTA-MC-008"],
+    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHITA-MC-007", "CHITA-MC-008"],
   },
   {
     source: "fac-59a-36-011", category: "AHCA", kind: "TRAINING_MANDATE", jurisdiction: "FL", agency: "AHCA",
@@ -355,7 +355,7 @@ export const RULES: RuleDef[] = [
     requirementText: "Education course on HIV and AIDS including the topics prescribed in s. 381.0035, F.S.",
     audienceText: "All assisted living facility employees, except those subject to s. 456.033, F.S.", facilityTypes: ALF,
     frequencyText: "One time.", initialTimingText: "Within 30 days of employment.", initialDueDaysFromHire: 30,
-    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHTA-HIV-001"],
+    status: "VERIFIED", verificationNote: LII_NOTE, pendingChangeNote: SB1404, suggestedCourseCodes: ["CHITA-HIV-001"],
   },
   {
     source: "fs-429-52", category: "AHCA", kind: "TRAINING_MANDATE", jurisdiction: "FL", agency: "AHCA",
@@ -417,7 +417,7 @@ export const RULES: RuleDef[] = [
     audienceText: "Employees of facilities licensed under ch. 393, 394, 397, 395, part II, III or IV of ch. 400, or part I of ch. 429, F.S. (not those subject to s. 456.033).",
     facilityTypes: ["HOSPITAL", "SKILLED_NURSING_FACILITY", "HOME_HEALTH_AGENCY", "ASSISTED_LIVING_FACILITY", "GROUP_HOME", "BEHAVIORAL_HEALTH"],
     frequencyText: "One time; not repeated on changing employment.", initialTimingText: "No deadline in the statute (facility rules may set one, e.g. ALF: 30 days).",
-    status: "VERIFIED", verificationNote: "Confirmed on leg.state.fl.us. Facility-type mapping to licensing chapters is approximate — confirm each facility's license chapter.", suggestedCourseCodes: ["CHTA-HIV-001"],
+    status: "VERIFIED", verificationNote: "Confirmed on leg.state.fl.us. Facility-type mapping to licensing chapters is approximate — confirm each facility's license chapter.", suggestedCourseCodes: ["CHITA-HIV-001"],
   },
   {
     source: "fs-456-0341", category: "FL_DOH", kind: "CONTINUING_EDUCATION", jurisdiction: "FL", agency: "Florida Department of Health",

@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const emergencyPreparedness: CourseContent = {
-  code: "CHTA-MC-009",
+  code: "CHITA-MC-009",
   title: "Emergency Preparedness for Healthcare Workers",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

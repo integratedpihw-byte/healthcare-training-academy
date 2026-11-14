@@ -17,7 +17,7 @@ const signOut = async (page: Page) => {
   await page.waitForURL(/\/login/);
 };
 
-const sp = LIBRARY.find((c) => c.code === "CHTA-MC-006")!;
+const sp = LIBRARY.find((c) => c.code === "CHITA-MC-006")!;
 const byPrompt = new Map(sp.finalExam.questions.map((q) => [q.prompt, q]));
 
 test.describe.configure({ mode: "serial" });

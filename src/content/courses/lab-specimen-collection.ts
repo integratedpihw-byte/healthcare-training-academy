@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const labSpecimenCollection: CourseContent = {
-  code: "CHTA-LAB-001",
+  code: "CHITA-LAB-001",
   title: "Laboratory Specimen Collection and Handling",
   categorySlug: "laboratory-phlebotomy",
   isRequiredByDefault: false,

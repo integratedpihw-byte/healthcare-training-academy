@@ -3,7 +3,7 @@ import type { CourseContent } from "../types";
 const ACCESSED = "2026-11-13";
 
 export const standardPrecautionsPpe: CourseContent = {
-  code: "CHTA-MC-006",
+  code: "CHITA-MC-006",
   title: "Standard Precautions, Hand Hygiene and Personal Protective Equipment",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

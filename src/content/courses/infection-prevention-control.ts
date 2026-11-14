@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const infectionPreventionControl: CourseContent = {
-  code: "CHTA-MC-005",
+  code: "CHITA-MC-005",
   title: "Infection Prevention and Control in Healthcare Settings",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

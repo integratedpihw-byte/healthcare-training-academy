@@ -4,6 +4,7 @@
  */
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
+import { CERTIFICATE_LOGO_ASPECT, CERTIFICATE_LOGO_JPEG_BASE64 } from "./logo-data";
 import { ACADEMY_NAME, CERTIFICATE_DISCLAIMER, effectiveStatus, verificationUrl, type EffectiveStatus } from "./service";
 
 const NAVY = rgb(11 / 255, 37 / 255, 69 / 255);
@@ -71,12 +72,12 @@ export async function renderCertificatePdf(c: CertificatePdfData): Promise<Uint8
   page.drawRectangle({ x: 18, y: 18, width: W - 36, height: H - 36, borderColor: NAVY, borderWidth: 3 });
   page.drawRectangle({ x: 28, y: 28, width: W - 56, height: H - 56, borderColor: TEAL, borderWidth: 1 });
 
-  // Logo mark (cross on navy tile) + academy name
-  const lx = W / 2 - 18;
-  page.drawRectangle({ x: lx, y: H - 92, width: 36, height: 36, color: NAVY });
-  page.drawRectangle({ x: lx + 14, y: H - 86, width: 8, height: 24, color: TEAL });
-  page.drawRectangle({ x: lx + 6, y: H - 78, width: 24, height: 8, color: TEAL });
-  centered(page, ACADEMY_NAME.toUpperCase(), H - 112, sansBold, 12, NAVY);
+  // Academy logo, with the full registered name beneath it
+  const logo = await pdf.embedJpg(Buffer.from(CERTIFICATE_LOGO_JPEG_BASE64, "base64"));
+  const logoW = 216;
+  const logoH = logoW / CERTIFICATE_LOGO_ASPECT;
+  page.drawImage(logo, { x: (W - logoW) / 2, y: H - 38 - logoH, width: logoW, height: logoH });
+  centered(page, ACADEMY_NAME.toUpperCase(), H - 124, sansBold, 9, NAVY);
 
   const title = c.kind === "CONTINUING_EDUCATION" ? "Certificate of Continuing Education" : "Certificate of Course Completion";
   centered(page, title, H - 160, serif, 34, NAVY);

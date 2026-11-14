@@ -89,7 +89,7 @@ export function CourseFields({ categories, v = {}, codeLocked = false, versionEd
         <Field label="Description" name="description"><Textarea id="description" name="description" rows={4} defaultValue={v.description} required /></Field>
         <Field label="Target audience" name="targetAudience"><Textarea id="targetAudience" name="targetAudience" rows={2} defaultValue={v.targetAudience} required /></Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Prerequisite course IDs" name="prerequisites" hint="Comma separated, e.g. CHTA-MC-001"><Input id="prerequisites" name="prerequisites" defaultValue={v.prerequisites?.join(", ")} /></Field>
+          <Field label="Prerequisite course IDs" name="prerequisites" hint="Comma separated, e.g. CHITA-MC-001"><Input id="prerequisites" name="prerequisites" defaultValue={v.prerequisites?.join(", ")} /></Field>
           <Field label="Completion criteria" name="completionCriteria"><Input id="completionCriteria" name="completionCriteria" defaultValue={v.completionCriteria ?? ""} /></Field>
         </div>
         <Field label="Regulatory references" name="regulatoryReferences" hint="One per line: Agency | Citation | Title | URL">

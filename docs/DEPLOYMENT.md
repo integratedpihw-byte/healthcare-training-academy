@@ -23,7 +23,7 @@ Copy names from `.env.example` into the host's secret store (Vercel → Project 
 
 ## 4. Migrate and seed reference data
 ```bash
-MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0018
+MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0019
 dotenv -e .env.production -- tsx scripts/seed.ts           # reference data + regulatory library + course library (IN_REVIEW)
 ```
 Do **not** pass `--demo` in production. Create the first platform administrator with `tsx scripts/ops/create-platform-admin.ts <email> <first> <last>` (emails a one-time setup link; no password is printed), then enroll MFA.

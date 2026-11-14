@@ -77,7 +77,7 @@ export const courses = pgTable(
   {
     id: pk(),
     tenantId: globalTenantId(),
-    /** Course identification number, e.g. CHTA-MC-001. */
+    /** Course identification number, e.g. CHITA-MC-001. */
     code: text().notNull(),
     title: text().notNull(),
     categoryId: uuid()

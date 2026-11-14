@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const medicationSafety: CourseContent = {
-  code: "CHTA-MM-001",
+  code: "CHITA-MM-001",
   title: "Medication Safety Fundamentals",
   categorySlug: "medication-management",
   isRequiredByDefault: false,

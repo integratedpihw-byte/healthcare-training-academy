@@ -52,7 +52,7 @@ beforeAll(async () => {
   learner2A = await addMember(A, "learner");
   const lib = await seedLibrary(systemDb());
   expect(lib.created.length + lib.skipped.length).toBe(LIBRARY.length);
-  const [c] = await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-001")));
+  const [c] = await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-001")));
   hipaaId = c.id;
 });
 afterAll(() => closePools());
@@ -95,7 +95,7 @@ describe("library content", () => {
 
   it("clinical approval requires credentials; full chain publishes and the course appears for every tenant", async () => {
     const scope = await platformScope();
-    const bpp = (await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-004"))))[0];
+    const bpp = (await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-004"))))[0];
     expect((await decide(scope, bpp.id, { decision: "APPROVED", comments: "ok" })).ok).toBe(true); // review
     const noCreds = await decide(scope, bpp.id, { decision: "APPROVED", comments: "ok" });
     expect(noCreds.ok).toBe(false); // clinical needs credentials
@@ -103,8 +103,8 @@ describe("library content", () => {
     await approveAll(scope, hipaaId);
     const forA = await as(A, learnerA.userId)((tx) => listCatalog(tx, learnerA.userId));
     const forB = await as(B, B.adminUserId)((tx) => listCatalog(tx, B.adminUserId));
-    expect(forA.map((c) => c.code)).toEqual(expect.arrayContaining(["CHTA-MC-001", "CHTA-MC-004"]));
-    expect(forB.map((c) => c.code)).toEqual(expect.arrayContaining(["CHTA-MC-001", "CHTA-MC-004"]));
+    expect(forA.map((c) => c.code)).toEqual(expect.arrayContaining(["CHITA-MC-001", "CHITA-MC-004"]));
+    expect(forB.map((c) => c.code)).toEqual(expect.arrayContaining(["CHITA-MC-001", "CHITA-MC-004"]));
   });
 
   it("published content is frozen — lessons cannot be edited in place", async () => {
@@ -153,7 +153,7 @@ describe("enrollment and progress", () => {
     const p = (await as(A, learnerA.userId)((tx) => getPlayer(tx, enrollmentId, learnerA.userId)))!;
     const b1 = await as(A, learnerA.userId)((tx) => toggleBookmark(tx, ctx, enrollmentId, p.flat[0].id));
     expect(b1.ok && b1.data.bookmarked).toBe(true);
-    const course = LIBRARY.find((c) => c.code === "CHTA-MC-001")!;
+    const course = LIBRARY.find((c) => c.code === "CHITA-MC-001")!;
     const kcAnswers = new Map(course.modules.flatMap((m) => m.lessons).filter((l) => l.type === "KNOWLEDGE_CHECK").map((l) => [l.title, Object.fromEntries((l.mediaMeta!.questions ?? []).map((q) => [q.id, q.correct]))]));
     let last: string | undefined;
     for (const l of p.flat) {
@@ -186,7 +186,7 @@ describe("enrollment and progress", () => {
   });
 
   it("a mandatory examination keeps the enrollment at AWAITING_ASSESSMENT (no completion without the exam)", async () => {
-    const bbp = (await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHTA-MC-004"))))[0];
+    const bbp = (await systemDb().select().from(courses).where(and(isNull(courses.tenantId), eq(courses.code, "CHITA-MC-004"))))[0];
     const [bank] = await systemDb().select().from(questionBanks).where(eq(questionBanks.courseId, bbp.id));
     // Add the exam to a NEW version so the frozen published version is untouched.
     const scope = await platformScope();
@@ -206,7 +206,7 @@ describe("enrollment and progress", () => {
     if (!r.ok) throw new Error(r.error);
     const p = (await as(A, learner2A.userId)((tx) => getPlayer(tx, r.data.enrollmentId, learner2A.userId)))!;
     expect(p.version.id).toBe(nv.data.versionId);
-    const course = LIBRARY.find((c) => c.code === "CHTA-MC-004")!;
+    const course = LIBRARY.find((c) => c.code === "CHITA-MC-004")!;
     const answers = new Map(course.modules.flatMap((m) => m.lessons).filter((l) => l.type === "KNOWLEDGE_CHECK").map((l) => [l.title, Object.fromEntries((l.mediaMeta!.questions ?? []).map((q) => [q.id, q.correct]))]));
     let status = "";
     for (const l of p.flat) {

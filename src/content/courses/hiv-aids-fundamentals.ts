@@ -4,7 +4,7 @@ import { caseStudy, check, kc, mc, ms, sc, text, tf } from "../build";
 const ACCESSED = "2026-11-13";
 
 export const hivAidsFundamentals: CourseContent = {
-  code: "CHTA-HIV-001",
+  code: "CHITA-HIV-001",
   title: "HIV/AIDS Fundamentals for Florida Healthcare Workers",
   categorySlug: "hiv-infectious-disease",
   isRequiredByDefault: true,

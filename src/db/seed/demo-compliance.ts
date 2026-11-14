@@ -59,9 +59,9 @@ export async function seedDemoCompliance(sys: Db): Promise<string[]> {
     done.push(`${decisions.length} DEMO applicability decisions`);
 
     const maps: [string, "course" | "competency", string | undefined][] = [
-      ["45 CFR 164.530(b)", "course", (await libCourse("CHTA-MC-001"))?.id],
-      ["29 CFR 1910.1030(g)(2)", "course", (await libCourse("CHTA-MC-004"))?.id],
-      ["Rule 59A-36.011(3)(a), F.A.C.", "course", (await libCourse("CHTA-MC-006"))?.id],
+      ["45 CFR 164.530(b)", "course", (await libCourse("CHITA-MC-001"))?.id],
+      ["29 CFR 1910.1030(g)(2)", "course", (await libCourse("CHITA-MC-004"))?.id],
+      ["Rule 59A-36.011(3)(a), F.A.C.", "course", (await libCourse("CHITA-MC-006"))?.id],
     ];
     let mapped = 0;
     for (const [citation, target, id] of maps) {

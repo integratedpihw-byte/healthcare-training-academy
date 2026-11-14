@@ -4,7 +4,7 @@ const ACCESSED = "2026-11-13";
 const STD = "https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.1030";
 
 export const oshaBloodbornePathogens: CourseContent = {
-  code: "CHTA-MC-004",
+  code: "CHITA-MC-004",
   title: "OSHA Bloodborne Pathogens",
   categorySlug: "mandatory-compliance",
   isRequiredByDefault: true,

@@ -50,5 +50,5 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // Scheduled jobs, webhooks and the key-authenticated API carry no session cookie.
-  matcher: [{ source: "/((?!_next/static|_next/image|favicon.ico|api/health|api/cron/|api/webhooks/|api/v1/).*)", missing: [{ type: "header", key: "next-router-prefetch" }] }],
+  matcher: [{ source: "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|manifest.webmanifest|brand/|api/health|api/cron/|api/webhooks/|api/v1/).*)", missing: [{ type: "header", key: "next-router-prefetch" }] }],
 };
