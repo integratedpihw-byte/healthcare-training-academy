@@ -7,6 +7,7 @@ import { deliverPendingSms } from "@/lib/notify/sms";
 import { runRenewalEngine } from "@/lib/workforce/renewal";
 import { snapshotCompliance } from "@/lib/compliance/service";
 import { processTrials } from "@/lib/billing/service";
+import { purgeExpiredAuthData } from "@/lib/auth/service";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -25,5 +26,6 @@ export async function GET(req: Request) {
   const trials = await processTrials(sys);
   const email = await deliverPendingEmails(sys, 500);
   const sms = await deliverPendingSms(sys, 200);
-  return NextResponse.json({ expiredCertificates: expired, engine, complianceSnapshots: snapshots, trials, email, sms });
+  const housekeeping = await purgeExpiredAuthData(sys);
+  return NextResponse.json({ expiredCertificates: expired, engine, complianceSnapshots: snapshots, trials, email, sms, housekeeping });
 }

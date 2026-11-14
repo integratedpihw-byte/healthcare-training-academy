@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { requireTenant } from "@/lib/auth/context";
 import { facilityScope } from "@/lib/rbac/access";
 import { adminDashboard, directReports, latestNotifications, myEmployeeRecord } from "@/lib/dashboard/queries";
-import { Alert, Badge, ButtonLink, Card, EmptyState, FACILITY_TYPE_LABELS, PageHeader, StatCard, Table, Td, fmtDate } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, EmptyState, FACILITY_TYPE_LABELS, PageHeader, StatCard, Table, Td, fmtDate, fmtDateTime } from "@/components/ui";
 import { assignmentStats, listAssignments, myAssignments } from "@/lib/workforce/assignments";
 import { complianceFor } from "@/lib/workforce/compliance";
 import { evaluateCompliance } from "@/lib/compliance/service";
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
               <Table head={["When", "Who", "Action"]} empty={d.recentAudit.length === 0 ? <EmptyState>No activity recorded yet.</EmptyState> : undefined}>
                 {d.recentAudit.map((a) => (
                   <tr key={a.id}>
-                    <Td className="whitespace-nowrap">{a.createdAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</Td>
+                    <Td className="whitespace-nowrap">{fmtDateTime(a.createdAt)}</Td>
                     <Td>{a.actorFirst ? `${a.actorFirst} ${a.actorLast}` : "System"}</Td>
                     <Td><code className="text-xs">{a.action}</code></Td>
                   </tr>
@@ -192,6 +192,21 @@ export default async function DashboardPage() {
       <PageHeader title={greeting} description={kind === "supervisor" ? "Your team at a glance." : kind === "instructor" ? "Your instructor workspace." : "Your personal training workspace."} />
       <div className="space-y-6">
         {securityNudge}
+        {mine.length > 0 && (
+          <Card title={`My required training (${mine.length})`} actions={<Link href="/learning" className="text-xs font-semibold text-teal-700 hover:underline">My Learning</Link>}>
+            <ul className="divide-y divide-slate-100">
+              {mine.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0 flex-1 basis-56">
+                    <div className="font-medium text-navy-900">{a.courseTitle}</div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"><AssignmentBadge status={a.status} /><span className="text-slate-600">Due <DueDate date={a.dueDate} open /></span></div>
+                  </div>
+                  <ButtonLink href={a.enrollmentId ? `/learning/${a.enrollmentId}` : "/learning"} className="shrink-0">{a.status === "ASSIGNED" || !a.enrollmentId ? "Start" : "Continue"}</ButtonLink>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
         <div className="grid gap-6 lg:grid-cols-3">
           <Card title="My profile" className="lg:col-span-1">
             {me ? (
@@ -219,20 +234,6 @@ export default async function DashboardPage() {
             )}
           </Card>
         </div>
-        {mine.length > 0 && (
-          <Card title={`My required training (${mine.length})`} actions={<Link href="/learning" className="text-xs font-semibold text-teal-700 hover:underline">My Learning</Link>}>
-            <Table head={["Course", "Due", "Status", ""]}>
-              {mine.map((a) => (
-                <tr key={a.id}>
-                  <Td className="font-medium text-navy-900">{a.courseTitle}</Td>
-                  <Td className="whitespace-nowrap"><DueDate date={a.dueDate} open /></Td>
-                  <Td><AssignmentBadge status={a.status} /></Td>
-                  <Td className="text-right">{a.enrollmentId ? <Link href={`/learning/${a.enrollmentId}`} className="text-sm font-semibold text-teal-700 hover:underline">Continue</Link> : <Link href="/learning" className="text-sm font-semibold text-teal-700 hover:underline">Start</Link>}</Td>
-                </tr>
-              ))}
-            </Table>
-          </Card>
-        )}
         {kind === "supervisor" && (
           <Card title={`Direct reports (${reports.length})`} actions={ctx.can("team.view") ? <Link href="/employees" className="text-xs font-semibold text-teal-700 hover:underline">My team</Link> : undefined}>
             <Table head={["Employee", "Position", "Facility", "Training", "Hire date"]} empty={reports.length === 0 ? <EmptyState>No employees are assigned to you as supervisor.</EmptyState> : undefined}>

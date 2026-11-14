@@ -20,7 +20,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const url = new URL(req.url);
   const format = url.searchParams.get("format") ?? "csv";
   if (!["csv", "xlsx", "pdf"].includes(format)) return NextResponse.json({ error: "bad format" }, { status: 400 });
-  const p = paramsSchema.parse(Object.fromEntries(url.searchParams));
+  const parsed = paramsSchema.safeParse(Object.fromEntries(url.searchParams));
+  if (!parsed.success) return NextResponse.json({ error: "invalid parameters" }, { status: 400 });
+  const p = parsed.data;
   if ((def.required ?? []).some((k) => !p[k])) return NextResponse.json({ error: "missing parameters" }, { status: 400 });
   const tenantId = s.tenant.id;
   const userId = s.user.id;

@@ -19,7 +19,7 @@ import {
 import { writeAudit } from "@/lib/audit";
 import { hashPassword } from "@/lib/auth/password";
 import { randomToken } from "@/lib/auth/crypto";
-import { sendPasswordLink } from "@/lib/auth/service";
+import { secureUnverifiedAccount, sendPasswordLink } from "@/lib/auth/service";
 import { can, type Access } from "@/lib/rbac/access";
 import { systemRoleId, type ServiceResult } from "@/lib/tenancy/service";
 import { normalizePositionCode } from "./rules";
@@ -201,6 +201,7 @@ export async function provisionEmployeeAccount(sys: Db, tx: Tx, ctx: Ctx, employ
   if (!upd.length) return err("You are not authorized to edit this employee.");
   await writeAudit(tx, { tenantId: ctx.tenantId, actorUserId: ctx.userId, action: "employee.account_provisioned", entityType: "employee", entityId: employeeId, after: { userId: u.id, role: "learner", created } });
   if (created) await sendPasswordLink(sys, u.id, e.email, "invite");
+  else await secureUnverifiedAccount(sys, u.id, e.email);
   return { ok: true, data: { userId: u.id, created } };
 }
 

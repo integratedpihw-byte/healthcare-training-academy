@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/site-footer";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/context";
 import { ButtonLink, Logo } from "@/components/ui";
@@ -38,6 +39,7 @@ export default async function Home() {
       </main>
       <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500">
         © {new Date().getFullYear()} Complete Healthcare Training Academy. Course certificates are not state licenses or accredited continuing education unless explicitly stated.
+        <SiteFooter className="mt-3" />
       </footer>
     </div>
   );

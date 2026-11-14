@@ -145,5 +145,7 @@ export async function requireAnyPermission(perms: PermissionKey[]): Promise<Tena
 export async function requirePlatformAdmin(): Promise<AuthContext> {
   const ctx = await requireUser();
   if (!ctx.user.isPlatformAdmin) redirect("/forbidden?p=platform.admin");
+  // Platform administrators work outside tenant isolation, so a password alone is not enough.
+  if (!ctx.user.mfaEnabled && process.env.PLATFORM_ADMIN_MFA !== "optional") redirect("/settings/security?required=mfa");
   return ctx;
 }

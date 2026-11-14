@@ -2,7 +2,7 @@ import { desc, eq, lt } from "drizzle-orm";
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/context";
 import { auditLogs, users } from "@/db/schema";
-import { Card, EmptyState, PageHeader, Table, Td } from "@/components/ui";
+import { Card, EmptyState, PageHeader, Table, Td, fmtDateTime } from "@/components/ui";
 import { VerifyChain } from "./verify-chain";
 
 export const metadata = { title: "Audit trail" };
@@ -30,7 +30,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             {rows.map((r) => (
               <tr key={r.id}>
                 <Td>{r.id}</Td>
-                <Td className="whitespace-nowrap">{r.createdAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "medium" })}</Td>
+                <Td className="whitespace-nowrap">{fmtDateTime(r.createdAt, true)}</Td>
                 <Td>{r.first ? <>{r.first} {r.last}<div className="text-xs text-slate-500">{r.email}</div></> : "System"}</Td>
                 <Td><code className="text-xs">{r.action}</code></Td>
                 <Td className="text-xs">{r.entityType}<div className="text-slate-500">{r.entityId?.slice(0, 8)}</div></Td>

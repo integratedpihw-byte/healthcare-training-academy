@@ -302,6 +302,27 @@ export async function sendPasswordLink(db: Db, userId: string, email: string, ki
   );
 }
 
+/**
+ * Called before an organization grants access to an account that already exists.
+ * Self-registration does not prove ownership of the email address, so an account whose
+ * address was never verified could have been created by someone else in anticipation of
+ * the invitation. Such an account is locked to a random password, signed out everywhere
+ * and stripped of MFA, and the real mailbox owner receives a set-password link.
+ * Returns true when the account was secured this way.
+ */
+export async function secureUnverifiedAccount(db: Db, userId: string, email: string): Promise<boolean> {
+  const [u] = await db.select({ verified: users.emailVerifiedAt }).from(users).where(eq(users.id, userId));
+  if (!u || u.verified) return false;
+  await db.transaction(async (tx) => {
+    await tx.update(users).set({ passwordHash: await hashPassword(randomToken(48)), passwordChangedAt: sql`now()`, mfaEnabled: false, mfaSecretEnc: null }).where(eq(users.id, userId));
+    await tx.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
+    await tx.update(passwordResetTokens).set({ usedAt: new Date() }).where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
+    await writeAudit(tx, { tenantId: null, actorUserId: userId, action: "auth.unverified_account_secured", entityType: "user", entityId: userId });
+  });
+  await sendPasswordLink(db, userId, email, "invite");
+  return true;
+}
+
 export type ResetResult = { ok: true } | { ok: false; error: string; issues?: string[] };
 
 export async function resetPassword(db: Db, token: string, newPassword: string): Promise<ResetResult> {
@@ -327,7 +348,8 @@ export async function resetPassword(db: Db, token: string, newPassword: string):
     if (!used.length) throw new Error("Token already used");
     await tx
       .update(users)
-      .set({ passwordHash, passwordChangedAt: sql`now()`, failedLoginCount: 0, lockedUntil: null })
+      // The link was delivered to the mailbox, so completing it proves control of the address.
+      .set({ passwordHash, passwordChangedAt: sql`now()`, failedLoginCount: 0, lockedUntil: null, emailVerifiedAt: sql`coalesce(${users.emailVerifiedAt}, now())` })
       .where(eq(users.id, t.userId));
     await tx.update(sessions).set({ revokedAt: now }).where(and(eq(sessions.userId, t.userId), isNull(sessions.revokedAt)));
     await writeAudit(tx, { tenantId: null, actorUserId: t.userId, action: "auth.password_reset", entityType: "user", entityId: t.userId });
@@ -395,4 +417,12 @@ export async function userTenants(db: Db, userId: string) {
     .innerJoin(tenants, eq(tenants.id, memberships.tenantId))
     .where(and(eq(memberships.userId, userId), eq(memberships.status, "ACTIVE")))
     .orderBy(tenants.name);
+}
+
+/** Daily housekeeping: remove expired sessions, spent reset links and stale rate-limit counters. */
+export async function purgeExpiredAuthData(db: Db): Promise<{ sessions: number; resetTokens: number; rateLimits: number }> {
+  const s = await db.execute(sql`delete from sessions where expires_at < now() - interval '7 days' or revoked_at < now() - interval '7 days'`);
+  const t = await db.execute(sql`delete from password_reset_tokens where expires_at < now() - interval '7 days'`);
+  const r = await db.execute(sql`delete from rate_limits where window_start < now() - interval '1 day'`);
+  return { sessions: s.rowCount ?? 0, resetTokens: t.rowCount ?? 0, rateLimits: r.rowCount ?? 0 };
 }

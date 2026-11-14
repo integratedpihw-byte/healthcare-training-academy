@@ -127,7 +127,7 @@ test.describe("file uploads", () => {
 test.describe("accessibility (axe, WCAG 2.2 AA)", () => {
   test("public pages", async ({ page }) => {
     const v: string[] = [];
-    for (const u of ["/", "/login", "/register", "/forgot-password", "/verify"]) v.push(...(await axe(page, u)));
+    for (const u of ["/", "/login", "/register", "/register/individual", "/forgot-password", "/verify", "/terms", "/privacy", "/help"]) v.push(...(await axe(page, u)));
     expect(v).toEqual([]);
   });
   test("administrator pages", async ({ page }) => {

@@ -120,7 +120,7 @@ export async function seedDemo(db: Db): Promise<{ created: string[]; skipped: st
   // Platform super administrator
   const [admin] = await db
     .insert(users)
-    .values({ email: "superadmin@chta-platform.example", firstName: "Platform", lastName: "Administrator", passwordHash, isPlatformAdmin: true })
+    .values({ email: "superadmin@chta-platform.example", firstName: "Platform", lastName: "Administrator", passwordHash, isPlatformAdmin: true, emailVerifiedAt: new Date() })
     .onConflictDoNothing({ target: users.email })
     .returning({ id: users.id });
   const [adminRow] = admin ? [admin] : await db.select({ id: users.id }).from(users).where(eq(users.email, "superadmin@chta-platform.example"));
@@ -171,7 +171,7 @@ export async function seedDemo(db: Db): Promise<{ created: string[]; skipped: st
       for (const u of t.users) {
         const [row] = await tx
           .insert(users)
-          .values({ email: u.email, firstName: u.first, lastName: u.last, passwordHash })
+          .values({ email: u.email, firstName: u.first, lastName: u.last, passwordHash, emailVerifiedAt: new Date() })
           .onConflictDoUpdate({ target: users.email, set: { firstName: u.first } })
           .returning({ id: users.id });
         userIds.set(u.email, row.id);

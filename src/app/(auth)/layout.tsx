@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +18,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <p className="text-xs text-navy-100/80">Internal course certificates are not state licenses or accredited CE unless explicitly stated.</p>
       </aside>
       <main id="main" className="flex items-center justify-center bg-sky-50 px-4 py-10">
-        <div className="w-full max-w-lg">{children}</div>
+        <div className="w-full max-w-lg">
+          <Link href="/" className="mb-6 inline-block lg:hidden"><Logo /></Link>
+          {children}
+          <SiteFooter className="mt-6" />
+        </div>
       </main>
     </div>
   );

@@ -7,7 +7,7 @@ import { SOURCE_LABELS } from "@/lib/workforce/assignments";
 import { ENROLLMENT_LABEL } from "@/lib/learning/labels";
 import { todayIso } from "@/lib/workforce/rules";
 import { ActionForm } from "@/components/action-form";
-import { Alert, Badge, Card, Field, Input, PageHeader, Select, Textarea, fmtDate } from "@/components/ui";
+import { Alert, Badge, Card, Field, Input, PageHeader, Select, Textarea, fmtDate, fmtDateTime } from "@/components/ui";
 import { AssignmentBadge, DueDate } from "@/components/workforce/common";
 import { changeDueDateAction, closeAssignmentAction } from "../../actions";
 
@@ -77,7 +77,7 @@ export default async function AssignmentPage({ params, searchParams }: { params:
             <Card title="History">
               <ul className="space-y-2 text-sm">
                 {d.history.map((h, i) => (
-                  <li key={i}><span className="font-medium text-navy-900">{h.action.replace("assignment.", "").replaceAll("_", " ")}</span> <span className="text-xs text-slate-500">{h.at.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}{h.actor ? ` · ${h.actor}` : " · system"}</span></li>
+                  <li key={i}><span className="font-medium text-navy-900">{h.action.replace("assignment.", "").replaceAll("_", " ")}</span> <span className="text-xs text-slate-500">{fmtDateTime(h.at)}{h.actor ? ` · ${h.actor}` : " · system"}</span></li>
                 ))}
               </ul>
             </Card>

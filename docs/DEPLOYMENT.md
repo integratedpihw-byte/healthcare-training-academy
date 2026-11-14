@@ -19,7 +19,7 @@ psql "$ADMIN_URL" -v owner_pw=… -v app_pw=… -v system_pw=… -v db=chta -f s
 ```
 
 ## 3. Configure environment variables
-Copy names from `.env.example` into the host's secret store (Vercel → Project → Settings → Environment Variables). **Never** prefix secrets with `NEXT_PUBLIC_`. Required: `DATABASE_URL`, `SYSTEM_DATABASE_URL`, `APP_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, email settings, `STORAGE_DRIVER=s3` + S3 settings. `MIGRATION_DATABASE_URL` is needed only where migrations run.
+Copy names from `.env.example` into the host's secret store (Vercel → Project → Settings → Environment Variables). **Never** prefix secrets with `NEXT_PUBLIC_`. Required: `DATABASE_URL`, `SYSTEM_DATABASE_URL`, `APP_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, email settings, `STORAGE_DRIVER=s3` + S3 settings. `MIGRATION_DATABASE_URL` is needed only where migrations run. Set `SUPPORT_EMAIL` and `LEGAL_ENTITY_NAME` (shown on Help, Terms and Privacy pages). Leave `PLATFORM_ADMIN_MFA` unset so platform administrators must enroll two-step verification.
 
 ## 4. Migrate and seed reference data
 ```bash

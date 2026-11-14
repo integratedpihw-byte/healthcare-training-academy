@@ -20,7 +20,7 @@ import {
 } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
 import { hashPassword, passwordIssues } from "@/lib/auth/password";
-import { normalizeEmail, sendPasswordLink } from "@/lib/auth/service";
+import { normalizeEmail, secureUnverifiedAccount, sendPasswordLink } from "@/lib/auth/service";
 import { randomToken } from "@/lib/auth/crypto";
 import type { SystemRoleKey } from "@/lib/rbac/catalog";
 
@@ -46,7 +46,7 @@ export const registerOrganizationSchema = z.object({
   adminEmail: z.string().trim().email().max(254),
   password: z.string(),
   plan: z.enum(["STARTER", "PROFESSIONAL", "ENTERPRISE"]).default("STARTER"),
-  acceptTerms: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
+  acceptTerms: z.literal(true, { error: "You must accept the terms" }),
 });
 export type RegisterOrganizationInput = z.input<typeof registerOrganizationSchema>;
 
@@ -165,7 +165,7 @@ export const registerIndividualSchema = z.object({
   email: z.string().trim().email().max(254),
   password: z.string(),
   state: usState.default("FL"),
-  acceptTerms: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
+  acceptTerms: z.literal(true, { error: "You must accept the terms" }),
 });
 
 /** Individual learners get a personal tenant (uniform isolation); active immediately. */
@@ -416,6 +416,7 @@ export async function inviteMember(
     after: { userId: u.id, role: role.key, facilityId: v.facilityId || null },
   });
   if (created) await sendPasswordLink(sys, u.id, email, "invite");
+  else if (!existing) await secureUnverifiedAccount(sys, u.id, email); // first access to this organization
   return { ok: true, data: { userId: u.id, created } };
 }
 

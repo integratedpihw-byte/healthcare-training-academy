@@ -166,3 +166,51 @@ describe("multi-factor authentication", () => {
     expect((await resolveSession(systemDb(), r.token))!.mfaVerified).toBe(true);
   });
 });
+
+describe("email ownership (account pre-registration)", () => {
+  it("locks out whoever pre-registered an invited address and hands the account to the mailbox owner", async () => {
+    const { registerIndividual, inviteMember, systemRoleId } = await import("@/lib/tenancy/service");
+    const { withTenant } = await import("@/db/client");
+    const email = `victim-${Date.now()}@hospital.example`;
+    const attackerPw = "Attacker-Chosen#2026";
+    // Someone who does not own the mailbox self-registers with the victim's address.
+    const reg = await registerIndividual(systemDb(), { firstName: "Not", lastName: "Owner", email, password: attackerPw, state: "FL", acceptTerms: true });
+    expect(reg.ok).toBe(true);
+    const before = await login(systemDb(), { email, password: attackerPw }, meta());
+    expect(before.status).toBe("ok");
+
+    // The organization later invites that address.
+    const roleId = await systemRoleId(systemDb(), "org_admin");
+    const sent = consoleOutbox.length;
+    const inv = await withTenant({ tenantId: T.tenantId, userId: T.adminUserId }, (tx) => inviteMember(systemDb(), tx, { tenantId: T.tenantId, userId: T.adminUserId }, { email, firstName: "Real", lastName: "Owner", roleId, facilityId: "" }));
+    expect(inv.ok && !inv.data.created).toBe(true);
+
+    // The pre-registered password and session stop working; the owner gets a set-password link.
+    if (before.status === "ok") expect(await resolveSession(systemDb(), before.token)).toBeNull();
+    expect((await login(systemDb(), { email, password: attackerPw }, meta())).status).toBe("invalid");
+    const mail = consoleOutbox.slice(sent).find((m) => m.to === email);
+    expect(mail?.text).toContain("/reset-password?token=");
+
+    // Using the emailed link proves ownership; later invitations leave the account alone.
+    const token = /token=([\w-]+)/.exec(mail!.text)![1];
+    expect((await resetPassword(systemDb(), token, "Fresh-Secret#2026xy")).ok).toBe(true);
+    const [u] = await systemDb().select({ v: users.emailVerifiedAt }).from(users).where(eq(users.email, email));
+    expect(u.v).toBeInstanceOf(Date);
+    const { secureUnverifiedAccount } = await import("@/lib/auth/service");
+    if (inv.ok) expect(await secureUnverifiedAccount(systemDb(), inv.data.userId, email)).toBe(false);
+    expect((await login(systemDb(), { email, password: "Fresh-Secret#2026xy" }, meta())).status).toBe("ok");
+  });
+
+  it("purges expired sessions, spent reset links and stale rate-limit counters", async () => {
+    const { purgeExpiredAuthData } = await import("@/lib/auth/service");
+    const { sql } = await import("drizzle-orm");
+    const db = systemDb();
+    await db.execute(sql`insert into rate_limits (key, count, window_start) values ('purge-test', 1, now() - interval '2 days')`);
+    await db.insert(sessions).values({ tokenHash: `purge-${Date.now()}`, userId: T.adminUserId, mfaVerified: true, expiresAt: new Date(Date.now() - 8 * 86_400_000) });
+    const live = await login(db, { email: T.adminEmail, password: PW }, meta());
+    const r = await purgeExpiredAuthData(db);
+    expect(r.rateLimits).toBeGreaterThanOrEqual(1);
+    expect(r.sessions).toBeGreaterThanOrEqual(1);
+    if (live.status === "ok") expect(await resolveSession(db, live.token)).not.toBeNull();
+  });
+});

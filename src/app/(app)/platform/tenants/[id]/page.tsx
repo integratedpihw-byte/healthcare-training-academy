@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { systemDb } from "@/db/server";
 import { requirePlatformAdmin } from "@/lib/auth/context";
 import { tenantDetail } from "@/lib/platform/queries";
-import { Badge, Card, FACILITY_TYPE_LABELS, Field, Input, PageHeader, Select, Table, Td, Textarea, fmtDate } from "@/components/ui";
+import { Badge, Card, FACILITY_TYPE_LABELS, Field, Input, PageHeader, Select, Table, Td, Textarea, fmtDate, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
 import { decideTenantAction, setPlanAction } from "../../actions";
 import { STATUS_TONE } from "@/lib/platform/status";
@@ -97,7 +97,7 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
         </Card>
         <Card title="Recent tenant activity" className="lg:col-span-3">
           <Table head={["When", "Action", "Entity"]}>
-            {d.audit.map((a) => <tr key={a.id}><Td>{a.createdAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</Td><Td><code className="text-xs">{a.action}</code></Td><Td className="text-xs">{a.entityType}</Td></tr>)}
+            {d.audit.map((a) => <tr key={a.id}><Td>{fmtDateTime(a.createdAt)}</Td><Td><code className="text-xs">{a.action}</code></Td><Td className="text-xs">{a.entityType}</Td></tr>)}
           </Table>
         </Card>
       </div>

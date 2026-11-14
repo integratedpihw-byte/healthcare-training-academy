@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth/context";
 import { systemDb } from "@/db/server";
 import { listSessions } from "@/lib/auth/service";
-import { Badge, Card, Field, Input, PageHeader, Table, Td } from "@/components/ui";
+import { Alert, Badge, Card, Field, Input, PageHeader, Table, Td, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
 import { PasswordHint } from "@/components/password-hint";
 import { changePasswordAction, disableMfaAction, revokeSessionAction } from "../actions";
@@ -9,12 +9,14 @@ import { MfaSetup } from "./mfa-setup";
 
 export const metadata = { title: "Security" };
 
-export default async function SecurityPage() {
+export default async function SecurityPage({ searchParams }: { searchParams: Promise<{ required?: string }> }) {
   const ctx = await requireUser();
+  const mfaRequired = (await searchParams).required === "mfa" && !ctx.user.mfaEnabled;
   const list = await listSessions(systemDb(), ctx.user.id);
   return (
     <>
       <PageHeader title="Security" description="Protect your account. Administrators should always use two-step verification." />
+      {mfaRequired && <div className="mb-6"><Alert tone="amber"><strong>Two-step verification is required for platform administrators.</strong> Set it up below with an authenticator app, then return to the Platform Console.</Alert></div>}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title={<span className="flex items-center gap-2">Two-step verification {ctx.user.mfaEnabled ? <Badge tone="green">On</Badge> : <Badge tone="amber">Off</Badge>}</span>}>
           {ctx.user.mfaEnabled ? (
@@ -39,8 +41,8 @@ export default async function SecurityPage() {
               <tr key={s.id}>
                 <Td className="max-w-xs truncate" title={s.userAgent ?? ""}>{s.userAgent?.slice(0, 60) ?? "Unknown"}</Td>
                 <Td>{s.ipAddress ?? "—"}</Td>
-                <Td>{s.createdAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</Td>
-                <Td>{s.lastSeenAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</Td>
+                <Td>{fmtDateTime(s.createdAt)}</Td>
+                <Td>{fmtDateTime(s.lastSeenAt)}</Td>
                 <Td className="text-right">
                   {s.id === ctx.session.sessionId ? <Badge tone="teal">This session</Badge> : (
                     <form action={revokeSessionAction}><input type="hidden" name="sessionId" value={s.id} /><button type="submit" className="text-sm font-semibold text-red-700 hover:underline">Sign out</button></form>

@@ -5,7 +5,7 @@ import { requireTenant } from "@/lib/auth/context";
 import { certificates, certificateVerifications } from "@/db/schema";
 import { CERTIFICATE_DISCLAIMER, effectiveStatus, getCertificate, verificationUrl } from "@/lib/certificates/service";
 import { CERT_KIND, CERT_STATUS } from "@/lib/certificates/labels";
-import { Alert, Badge, ButtonLink, Card, Field, PageHeader, Textarea, fmtDate } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, Field, PageHeader, Textarea, fmtDate, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
 import { revokeAction } from "../actions";
 
@@ -74,7 +74,7 @@ export default async function CertificatePage({ params, searchParams }: { params
           )}
           {verifications.length > 0 && (
             <Card title="Recent verifications">
-              <ul className="space-y-1 text-xs text-slate-600">{verifications.map((v) => <li key={v.id}>{v.verifiedAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</li>)}</ul>
+              <ul className="space-y-1 text-xs text-slate-600">{verifications.map((v) => <li key={v.id}>{fmtDateTime(v.verifiedAt)}</li>)}</ul>
             </Card>
           )}
         </div>

@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/site-footer";
 import Link from "next/link";
 import { Bell, Building2, CreditCard, LayoutDashboard, LogOut, Settings, ShieldCheck, BookOpen, GraduationCap, ClipboardList, Users, BadgeCheck, Award, Scale, Presentation, BarChart3 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
@@ -90,7 +91,7 @@ export function AppShell({
             <div className="truncate text-sm font-medium text-white">{user.firstName} {user.lastName}</div>
             <div className="truncate text-xs text-navy-100/70">{roleNames.join(", ") || (isPlatformAdmin ? "Platform Super Administrator" : "")}</div>
             <form action={logoutAction} className="mt-3">
-              <button type="submit" className="flex items-center gap-2 text-xs font-medium text-navy-100 hover:text-white">
+              <button type="submit" className="-mx-2 flex min-h-9 items-center gap-2 rounded px-2 text-xs font-medium text-navy-100 hover:text-white">
                 <LogOut className="h-3.5 w-3.5" /> Sign out
               </button>
             </form>
@@ -100,7 +101,7 @@ export function AppShell({
           {/* Mobile top bar */}
           <header className="flex items-center justify-between bg-navy-900 px-4 py-3 md:hidden">
             <Logo light />
-            <form action={logoutAction}><button className="text-xs text-white" type="submit">Sign out</button></form>
+            <form action={logoutAction}><button className="min-h-9 rounded px-3 text-sm font-medium text-white" type="submit">Sign out</button></form>
           </header>
           <nav aria-label="Main (mobile)" className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-2 md:hidden">
             {nav.map((n) => (
@@ -111,6 +112,7 @@ export function AppShell({
             {isPlatformAdmin && <Link href="/platform" className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-navy-800">Platform</Link>}
           </nav>
           <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <SiteFooter className="px-4 pb-8 pt-2" />
         </div>
       </div>
     </div>

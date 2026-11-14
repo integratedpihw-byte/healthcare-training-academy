@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import type { getBuilderCourse, getBuilderLesson, listManagedCourses } from "@/lib/learning/builder";
 import { REG_KEYS, SRC_KEYS, STAGE_LABEL, refsToText } from "@/lib/learning/builder";
 import { CONTENT_STATUS_TONE, LESSON_TYPE_LABEL } from "@/lib/learning/labels";
-import { Alert, Badge, Card, EmptyState, Field, Input, Select, Table, Td, Textarea, fmtDate } from "@/components/ui";
+import { Alert, Badge, Card, EmptyState, Field, Input, Select, Table, Td, Textarea, fmtDate, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
 import { LessonContent } from "@/components/learning/lesson-content";
 import { LessonMediaUpload } from "./lesson-media-upload";
@@ -259,7 +259,7 @@ export function CourseBuilder({ b, kind, base, categories, can, flash }: { b: B;
                   return (
                     <li key={a.id} className="border-l-2 border-slate-200 pl-3">
                       <div className="flex items-center gap-2"><span className="font-medium">{STAGE_LABEL[a.stage as keyof typeof STAGE_LABEL]}</span><Badge tone={a.decision === "APPROVED" ? "green" : "amber"}>{a.decision.replace("_", " ")}</Badge></div>
-                      <div className="text-xs text-slate-500">v{v?.versionNumber} · {a.decidedAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}{a.reviewerCredentials ? ` · ${a.reviewerCredentials}` : ""}</div>
+                      <div className="text-xs text-slate-500">v{v?.versionNumber} · {fmtDateTime(a.decidedAt)}{a.reviewerCredentials ? ` · ${a.reviewerCredentials}` : ""}</div>
                       {a.comments && <p className="mt-1 text-slate-700">{a.comments}</p>}
                     </li>
                   );

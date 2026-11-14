@@ -10,7 +10,7 @@ export default function Forbidden() {
         <Logo />
         <h1 className="mt-6 text-xl font-bold text-navy-900">Access denied</h1>
         <p className="mt-2 text-sm text-slate-700">Your role does not include permission for this page. If you need access, contact your organization administrator.</p>
-        <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-teal-700 underline">Return to dashboard</Link>
+        <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold"><Link href="/dashboard" className="py-1 text-teal-700 underline">Return to dashboard</Link><Link href="/help" className="py-1 text-teal-700 underline">Help</Link></div>
       </Card>
     </main>
   );

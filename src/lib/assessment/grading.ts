@@ -151,7 +151,7 @@ export const questionInputSchema = z
     } else if (q.type === "MATCHING") {
       const parsed = z.object({ left: z.array(opt).min(2).max(10), right: z.array(opt).min(2).max(12) }).safeParse(q.options);
       if (!parsed.success) return fail("Provide at least two left items and two right items");
-      const key = z.record(z.string()).safeParse(q.correctAnswer);
+      const key = z.record(z.string(), z.string()).safeParse(q.correctAnswer);
       const rightIds = new Set(parsed.data.right.map((r) => r.id));
       if (!key.success || !parsed.data.left.every((l) => key.data[l.id] && rightIds.has(key.data[l.id]))) fail("Match every left item to a right item", "correctAnswer");
     } else if (q.type === "FILL_IN_BLANK") {

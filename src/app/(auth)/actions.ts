@@ -13,11 +13,20 @@ import {
 import { clearSessionCookie, requestMeta, sessionToken, setSessionCookie } from "@/lib/auth/context";
 import { registerIndividual, registerOrganization } from "@/lib/tenancy/service";
 import { formValues, type FormState } from "@/lib/forms";
+import { rateLimit } from "@/lib/auth/rate-limit";
+
+/** Self-registration ceiling per network address (shared NATs considered). */
+async function registrationAllowed(): Promise<boolean> {
+  const { ip } = await requestMeta();
+  return (await rateLimit(systemDb(), `register:ip:${ip ?? "unknown"}`, 20, 60 * 60)).allowed;
+}
+const TOO_MANY: FormState = { error: "Too many registrations from this network. Please try again in an hour." };
 
 /** Only allow same-site relative redirects (prevents open redirect). */
 function safeNext(n: FormDataEntryValue | null): string {
   const s = typeof n === "string" ? n : "";
-  return s.startsWith("/") && !s.startsWith("//") && !s.startsWith("/\\") ? s : "/dashboard";
+  // Control characters and backslashes are rejected: browsers strip or normalize them, which could turn a path into "//host".
+  return /^\/(?![\/\\])[^\\\u0000-\u001f\u007f]*$/.test(s) ? s : "/dashboard";
 }
 
 export async function loginAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -35,7 +44,7 @@ export async function loginAction(_: FormState, fd: FormData): Promise<FormState
       await setSessionCookie(r.token);
       redirect(`/login/mfa?next=${encodeURIComponent(safeNext(fd.get("next")))}`);
     case "locked":
-      return { error: `Too many failed attempts. This account is locked until ${r.until.toLocaleTimeString("en-US")}.`, values: formValues(fd) };
+      return { error: `Too many failed attempts. This account is locked until ${r.until.toLocaleTimeString("en-US", { timeStyle: "short", timeZone: "America/New_York" }) + " ET"}.`, values: formValues(fd) };
     case "rate_limited":
       return { error: `Too many sign-in attempts. Try again in ${Math.ceil(r.retryAfterSeconds / 60)} minute(s).`, values: formValues(fd) };
     default:
@@ -77,6 +86,7 @@ export async function resetPasswordAction(_: FormState, fd: FormData): Promise<F
 
 export async function registerOrganizationAction(_: FormState, fd: FormData): Promise<FormState> {
   if (fd.get("password") !== fd.get("confirm")) return { error: "Passwords do not match.", fieldErrors: { confirm: ["Passwords do not match"] }, values: formValues(fd) };
+  if (!(await registrationAllowed())) return { ...TOO_MANY, values: formValues(fd) };
   const r = await registerOrganization(
     systemDb(),
     {
@@ -105,6 +115,7 @@ export async function registerOrganizationAction(_: FormState, fd: FormData): Pr
 
 export async function registerIndividualAction(_: FormState, fd: FormData): Promise<FormState> {
   if (fd.get("password") !== fd.get("confirm")) return { error: "Passwords do not match.", fieldErrors: { confirm: ["Passwords do not match"] }, values: formValues(fd) };
+  if (!(await registrationAllowed())) return { ...TOO_MANY, values: formValues(fd) };
   const r = await registerIndividual(systemDb(), {
     firstName: fd.get("firstName"),
     lastName: fd.get("lastName"),

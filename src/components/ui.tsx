@@ -124,7 +124,7 @@ export function Alert({ tone = "red", children }: { tone?: "red" | "green" | "am
 
 export function Table({ head, children, empty }: { head: ReactNode[]; children: ReactNode; empty?: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200">
+    <div className="overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline-2 focus-visible:outline-teal-600" tabIndex={0} role="region" aria-label="Table (scroll sideways for more columns)">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <thead className="bg-navy-50">
           <tr>
@@ -191,6 +191,14 @@ export const FACILITY_TYPE_LABELS: Record<string, string> = {
   STAFFING_AGENCY: "Healthcare Staffing Agency",
   OTHER: "Other",
 };
+
+/** Display time zone for timestamps (Florida-first; shown with an explicit "ET" label). */
+export const DISPLAY_TZ = "America/New_York";
+/** Date and time in Eastern Time, labelled, so server and browser always agree. */
+export function fmtDateTime(d: Date | null | undefined, seconds = false) {
+  if (!d) return "—";
+  return `${d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: seconds ? "medium" : "short", timeZone: DISPLAY_TZ })} ET`;
+}
 
 export function fmtDate(d: Date | string | null | undefined) {
   if (!d) return "—";

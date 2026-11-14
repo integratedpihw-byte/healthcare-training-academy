@@ -20,7 +20,9 @@ export async function GET(req: Request) {
   const format = url.searchParams.get("format") ?? "csv";
   const table = (url.searchParams.get("table") ?? "summary") as AnalyticsTable;
   if (!["csv", "xlsx", "pdf"].includes(format) || !ANALYTICS_TABLES.includes(table)) return NextResponse.json({ error: "bad request" }, { status: 400 });
-  const f = filterSchema.parse(Object.fromEntries(url.searchParams));
+  const fp = filterSchema.safeParse(Object.fromEntries(url.searchParams));
+  if (!fp.success) return NextResponse.json({ error: "bad request" }, { status: 400 });
+  const f = fp.data;
   const tenantId = s.tenant.id;
   const userId = s.user.id;
   const result = await withTenant({ tenantId, userId }, async (tx) => {

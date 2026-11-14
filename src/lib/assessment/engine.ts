@@ -120,7 +120,7 @@ export async function getAttemptForLearner(tx: Tx, ctx: Ctx, attemptId: string) 
   return { ...r, publicQuestions: r.questions.map((q) => publicQuestion({ ...q, type: q.type as QuestionType })) };
 }
 
-const responseSchema = z.union([z.string().max(5000), z.array(z.string().max(20)).max(20), z.record(z.string().max(20)), z.null()]);
+const responseSchema = z.union([z.string().max(5000), z.array(z.string().max(20)).max(20), z.record(z.string(), z.string().max(20)), z.null()]);
 
 export async function saveAnswer(tx: Tx, ctx: Ctx, attemptId: string, questionId: string, response: unknown): Promise<ServiceResult<{ savedAt: Date }>> {
   const p = responseSchema.safeParse(response);

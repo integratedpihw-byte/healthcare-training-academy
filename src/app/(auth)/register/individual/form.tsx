@@ -23,7 +23,7 @@ export function RegisterIndividualForm() {
       <Field label="Confirm password" name="confirm" error={e.confirm}><Input id="confirm" name="confirm" type="password" autoComplete="new-password" required /></Field>
       <label className="flex items-start gap-2 text-sm text-slate-700">
         <input type="checkbox" name="acceptTerms" className="mt-1" required />
-        <span>I agree to the Terms of Service and Privacy Policy.</span>
+        <span>I agree to the <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Privacy Policy</a>.</span>
       </label>
       {e.acceptTerms && <p className="text-xs text-red-700">{e.acceptTerms[0]}</p>}
       <SubmitButton className="w-full" pendingText="Creating account…">Create account</SubmitButton>

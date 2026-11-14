@@ -74,7 +74,7 @@ export function RegisterOrgForm() {
       </fieldset>
       <label className="flex items-start gap-2 text-sm text-slate-700">
         <input type="checkbox" name="acceptTerms" className="mt-1" required />
-        <span>I agree to the Terms of Service and Privacy Policy, and I am authorized to register this organization. I will not enter patient health information into training records.</span>
+        <span>I agree to the <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Privacy Policy</a>, and I am authorized to register this organization. I will not enter patient health information into training records.</span>
       </label>
       {e.acceptTerms && <p className="text-xs text-red-700">{e.acceptTerms[0]}</p>}
       <SubmitButton className="w-full" pendingText="Creating workspace…">Register organization</SubmitButton>

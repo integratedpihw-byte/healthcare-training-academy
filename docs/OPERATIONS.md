@@ -34,6 +34,7 @@
 | Bootstrap a platform admin | `tsx scripts/ops/create-platform-admin.ts <email> <first> <last>` (emails a setup link) |
 | Apply migrations | `MIGRATION_DATABASE_URL=… npx drizzle-kit migrate` — every migration re-runs `chta_apply_security()` |
 | Rotate `CRON_SECRET` | update host secret and scheduler simultaneously |
+| Lost authenticator device | Verify identity out of band, then `tsx scripts/ops/reset-mfa.ts <email>` (turns MFA off, signs out all sessions, emails a password link; audited) |
 | Rotate `ENCRYPTION_KEY` | requires re-encrypting MFA secrets; schedule maintenance — users may re-enroll MFA |
 | Revoke a compromised API key | tenant admin: Administration → Integrations → Revoke (permanent); platform: `update api_keys set revoked_at = now() where prefix = '…'` as `chta_system` |
 | Lock a user out | Administration → Users → deactivate (sessions revoked) |
