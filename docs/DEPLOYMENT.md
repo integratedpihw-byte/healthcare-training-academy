@@ -31,7 +31,7 @@ Do **not** pass `--demo` in production. Create the first platform administrator 
 Courses load **IN_REVIEW**. Qualified reviewers must complete Review → Clinical → Compliance approval in *Platform → Course library* before learners see them.
 
 ## 5. Deploy
-- **Vercel**: import the repository, framework preset Next.js, Node 22. `vercel.json` registers the cron jobs. Note: the 10-minute email/SMS job requires a plan that allows sub-daily cron schedules; otherwise run it from an external scheduler with the `CRON_SECRET` bearer token.
+- **Vercel**: import the repository, framework preset Next.js, Node 22, build command `npm run vercel-build` (applies migrations and seeds reference data first). `vercel.json` registers the daily job, which also flushes the email and SMS queues. For prompt delivery in production, call `/api/cron/email` every 10 minutes — add `{ "path": "/api/cron/email", "schedule": "*/10 * * * *" }` on a Vercel Pro plan, or use an external scheduler with the `CRON_SECRET` bearer token (Hobby plans allow daily cron jobs only).
 - **Docker**: `docker build -t chta . && docker run --env-file .env.production -p 3000:3000 chta`, behind a TLS-terminating proxy; schedule the cron routes externally.
 
 ### Upload size on serverless hosts

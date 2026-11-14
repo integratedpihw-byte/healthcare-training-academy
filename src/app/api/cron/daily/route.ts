@@ -3,6 +3,7 @@ import { systemDb } from "@/db/server";
 import { expireDueCertificates } from "@/lib/certificates/service";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { deliverPendingEmails } from "@/lib/notify/delivery";
+import { deliverPendingSms } from "@/lib/notify/sms";
 import { runRenewalEngine } from "@/lib/workforce/renewal";
 import { snapshotCompliance } from "@/lib/compliance/service";
 import { processTrials } from "@/lib/billing/service";
@@ -23,5 +24,6 @@ export async function GET(req: Request) {
   const snapshots = await snapshotCompliance(sys);
   const trials = await processTrials(sys);
   const email = await deliverPendingEmails(sys, 500);
-  return NextResponse.json({ expiredCertificates: expired, engine, complianceSnapshots: snapshots, trials, email });
+  const sms = await deliverPendingSms(sys, 200);
+  return NextResponse.json({ expiredCertificates: expired, engine, complianceSnapshots: snapshots, trials, email, sms });
 }
