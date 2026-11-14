@@ -164,8 +164,13 @@ test.describe("mobile (390×844)", () => {
     }
     const nav = page.getByRole("navigation", { name: "Main (mobile)" });
     await expect(nav).toBeVisible();
+    const menu = nav.getByRole("button", { name: /Menu/ });
+    await expect(menu).toHaveAttribute("aria-expanded", "false");
+    await menu.click();
+    await expect(nav.getByRole("link", { name: "Settings" })).toBeVisible(); // every destination is reachable without sideways scrolling
     await nav.getByRole("link", { name: "My Learning" }).click();
     await expect(page.getByRole("heading", { name: "My Learning" })).toBeVisible();
+    await expect(menu).toHaveAttribute("aria-expanded", "false"); // closes after navigating
     await shot(page, "p7-02-mobile-learning");
     await signOut(page);
     await signIn(page, "orgadmin@sunshine.example");

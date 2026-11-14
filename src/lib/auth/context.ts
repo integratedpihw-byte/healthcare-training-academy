@@ -4,9 +4,9 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { systemDb, withTenant, type Tx } from "@/db/server";
-import { subscriptions, tenants } from "@/db/schema";
+import { organizations, subscriptions, tenants } from "@/db/schema";
 import { entitlementsFor, hasFeature, type Entitlements, type Feature } from "@/lib/billing/plans";
-import { resolveSession, type ResolvedSession } from "./service";
+import { emailVerificationRequired, resolveSession, type ResolvedSession } from "./service";
 import { loadAccess, can, type Access } from "@/lib/rbac/access";
 import type { PermissionKey } from "@/lib/rbac/catalog";
 
@@ -45,7 +45,16 @@ export interface TenantInfo {
   type: "ORGANIZATION" | "INDIVIDUAL";
   status: "PENDING_APPROVAL" | "ACTIVE" | "SUSPENDED" | "REJECTED" | "CLOSED";
   rejectionReason: string | null;
+  /** IANA zone for displaying dates and times (organization setting). */
+  timeZone: string;
+  /** Two-step verification policy: ADMINS | ALL | OFF (organization setting). */
+  mfaPolicy: string;
 }
+
+/** Permissions that make a user an administrator for the two-step verification policy. */
+const ADMIN_PERMISSIONS: PermissionKey[] = ["org.users.manage", "org.roles.manage", "org.settings.manage", "employees.manage", "billing.manage", "integrations.manage"];
+/** Test environments may switch enforcement off; production leaves these unset. */
+const mfaEnforced = () => process.env.MFA_ENFORCEMENT !== "off";
 
 export interface AuthContext {
   session: ResolvedSession;
@@ -64,10 +73,13 @@ export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
   let access: Access | null = null;
   if (session.activeTenantId) {
     const [t] = await systemDb()
-      .select({ id: tenants.id, name: tenants.name, type: tenants.type, status: tenants.status, rejectionReason: tenants.rejectionReason })
+      .select({ id: tenants.id, name: tenants.name, type: tenants.type, status: tenants.status, rejectionReason: tenants.rejectionReason, timeZone: organizations.timeZone, mfaPolicy: organizations.mfaPolicy })
       .from(tenants)
-      .where(eq(tenants.id, session.activeTenantId));
-    tenant = t ?? null;
+      .leftJoin(organizations, eq(organizations.tenantId, tenants.id))
+      .where(eq(tenants.id, session.activeTenantId))
+      .limit(1);
+    // Personal (individual) workspaces have no organization row: Eastern Time, no policy.
+    tenant = t ? { ...t, timeZone: t.timeZone ?? "America/New_York", mfaPolicy: t.mfaPolicy ?? "OFF" } : null;
     if (tenant) {
       access = await withTenant({ tenantId: tenant.id, userId: session.userId }, (tx) => loadAccess(tx, tenant!.id, session.userId));
       if (!access) tenant = null; // membership removed
@@ -91,6 +103,8 @@ export async function requireUser(): Promise<AuthContext> {
   const ctx = await getAuthContext();
   if (!ctx) redirect("/login");
   if (ctx.user.mfaEnabled && !ctx.session.mfaVerified) redirect("/login/mfa");
+  // Self-registered accounts confirm their email address before using the application.
+  if (!ctx.user.emailVerified && !ctx.user.isPlatformAdmin && emailVerificationRequired()) redirect("/account/verify-email");
   return ctx;
 }
 
@@ -112,6 +126,11 @@ export async function requireTenant(): Promise<TenantContext> {
   const tenantId = ctx.tenant.id;
   const userId = ctx.user.id;
   const access = ctx.access;
+  // Organization policy: administrators (or everyone) must use two-step verification.
+  if (!ctx.user.mfaEnabled && mfaEnforced()) {
+    const policy = ctx.tenant.mfaPolicy;
+    if (policy === "ALL" || (policy === "ADMINS" && ADMIN_PERMISSIONS.some((p) => can(access, p)))) redirect("/settings/security?required=mfa");
+  }
   return {
     ...ctx,
     tenant: ctx.tenant,
@@ -146,6 +165,6 @@ export async function requirePlatformAdmin(): Promise<AuthContext> {
   const ctx = await requireUser();
   if (!ctx.user.isPlatformAdmin) redirect("/forbidden?p=platform.admin");
   // Platform administrators work outside tenant isolation, so a password alone is not enough.
-  if (!ctx.user.mfaEnabled && process.env.PLATFORM_ADMIN_MFA !== "optional") redirect("/settings/security?required=mfa");
+  if (!ctx.user.mfaEnabled && mfaEnforced()) redirect("/settings/security?required=mfa");
   return ctx;
 }

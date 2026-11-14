@@ -30,7 +30,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             {rows.map((r) => (
               <tr key={r.id}>
                 <Td>{r.id}</Td>
-                <Td className="whitespace-nowrap">{fmtDateTime(r.createdAt, true)}</Td>
+                <Td className="whitespace-nowrap">{fmtDateTime(r.createdAt, true, ctx.tenant.timeZone)}</Td>
                 <Td>{r.first ? <>{r.first} {r.last}<div className="text-xs text-slate-500">{r.email}</div></> : "System"}</Td>
                 <Td><code className="text-xs">{r.action}</code></Td>
                 <Td className="text-xs">{r.entityType}<div className="text-slate-500">{r.entityId?.slice(0, 8)}</div></Td>

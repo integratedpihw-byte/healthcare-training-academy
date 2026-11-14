@@ -13,7 +13,7 @@ export default async function MfaPage({ searchParams }: { searchParams: Promise<
   return (
     <Card>
       <h1 className="text-xl font-bold text-navy-900">Two-step verification</h1>
-      <p className="mt-1 text-sm text-slate-600">Enter the 6-digit code from your authenticator app.</p>
+      <p className="mt-1 text-sm text-slate-600">Enter the 6-digit code from your authenticator app, or a recovery code.</p>
       <MfaForm next={next} />
     </Card>
   );

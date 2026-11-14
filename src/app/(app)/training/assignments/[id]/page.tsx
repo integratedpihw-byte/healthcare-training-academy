@@ -77,7 +77,7 @@ export default async function AssignmentPage({ params, searchParams }: { params:
             <Card title="History">
               <ul className="space-y-2 text-sm">
                 {d.history.map((h, i) => (
-                  <li key={i}><span className="font-medium text-navy-900">{h.action.replace("assignment.", "").replaceAll("_", " ")}</span> <span className="text-xs text-slate-500">{fmtDateTime(h.at)}{h.actor ? ` · ${h.actor}` : " · system"}</span></li>
+                  <li key={i}><span className="font-medium text-navy-900">{h.action.replace("assignment.", "").replaceAll("_", " ")}</span> <span className="text-xs text-slate-500">{fmtDateTime(h.at, false, ctx.tenant.timeZone)}{h.actor ? ` · ${h.actor}` : " · system"}</span></li>
                 ))}
               </ul>
             </Card>

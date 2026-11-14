@@ -19,11 +19,11 @@ psql "$ADMIN_URL" -v owner_pw=… -v app_pw=… -v system_pw=… -v db=chta -f s
 ```
 
 ## 3. Configure environment variables
-Copy names from `.env.example` into the host's secret store (Vercel → Project → Settings → Environment Variables). **Never** prefix secrets with `NEXT_PUBLIC_`. Required: `DATABASE_URL`, `SYSTEM_DATABASE_URL`, `APP_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, email settings, `STORAGE_DRIVER=s3` + S3 settings. `MIGRATION_DATABASE_URL` is needed only where migrations run. Set `SUPPORT_EMAIL` and `LEGAL_ENTITY_NAME` (shown on Help, Terms and Privacy pages). Leave `PLATFORM_ADMIN_MFA` unset so platform administrators must enroll two-step verification.
+Copy names from `.env.example` into the host's secret store (Vercel → Project → Settings → Environment Variables). **Never** prefix secrets with `NEXT_PUBLIC_`. Required: `DATABASE_URL`, `SYSTEM_DATABASE_URL`, `APP_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, email settings, `STORAGE_DRIVER=s3` + S3 settings. `MIGRATION_DATABASE_URL` is needed only where migrations run. Set `SUPPORT_EMAIL` and `LEGAL_ENTITY_NAME` (shown on Help, Terms and Privacy pages). Leave `MFA_ENFORCEMENT`, `EMAIL_VERIFICATION` and `PASSWORD_BREACH_CHECK` unset in production so two-step verification, email confirmation and the breached-password check are all active.
 
 ## 4. Migrate and seed reference data
 ```bash
-MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0017
+MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0018
 dotenv -e .env.production -- tsx scripts/seed.ts           # reference data + regulatory library + course library (IN_REVIEW)
 ```
 Do **not** pass `--demo` in production. Create the first platform administrator with `tsx scripts/ops/create-platform-admin.ts <email> <first> <last>` (emails a one-time setup link; no password is printed), then enroll MFA.

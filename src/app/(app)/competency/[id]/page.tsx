@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import { requireTenant, requireFeature } from "@/lib/auth/context";
 import { evaluableEmployees, getAssessment, listCompetencies, verifySignature, type Criterion, type CriterionResult } from "@/lib/competency/service";
 import { facilities } from "@/db/schema";
-import { Alert, Badge, Button, Card, Field, Input, PageHeader, Textarea, fmtDate } from "@/components/ui";
+import { Alert, Badge, Button, Card, Field, Input, PageHeader, Textarea, fmtDate, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
 import { EvaluationForm } from "@/components/competency/evaluation-form";
 import { PrintButton } from "@/app/(app)/learning/[enrollmentId]/materials/print-button";
@@ -96,7 +96,7 @@ export default async function AssessmentPage({ params, searchParams }: { params:
             {a.status !== "DRAFT" && (
               <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
                 <div className="font-semibold text-navy-900">Electronic signature</div>
-                <p className="mt-1">Signed by <strong>{a.signerName}</strong>{a.signerCredentials ? `, ${a.signerCredentials}` : ""} on {a.signedAt?.toLocaleString("en-US", { dateStyle: "long", timeStyle: "short", timeZone: "America/New_York" })} ET{""}</p>
+                <p className="mt-1">Signed by <strong>{a.signerName}</strong>{a.signerCredentials ? `, ${a.signerCredentials}` : ""} on {fmtDateTime(a.signedAt, false, ctx.tenant.timeZone)}</p>
                 <p className="mt-1 break-all font-mono text-[11px] text-slate-500">SHA-256 {a.signatureHash}</p>
                 <p className={`mt-1 text-xs font-semibold ${sigOk ? "text-emerald-700" : "text-red-700"}`}>{sigOk ? "Signature verified — record unchanged since signing." : "Signature does not match the record. Contact support."}</p>
               </div>

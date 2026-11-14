@@ -4,7 +4,7 @@ import { myLearning } from "@/lib/learning/learner";
 import { examHistory } from "@/lib/assessment/engine";
 import { listAssessments } from "@/lib/competency/service";
 import { ENROLLMENT_LABEL, minutes } from "@/lib/learning/labels";
-import { Badge, Button, ButtonLink, Card, EmptyState, PageHeader, fmtDate } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, EmptyState, PageHeader, fmtDate, fmtDateTime } from "@/components/ui";
 import { myAssignments } from "@/lib/workforce/assignments";
 import { employeeIdsForUser } from "@/lib/workforce/employees";
 import { listLicenses } from "@/lib/workforce/licenses";
@@ -44,7 +44,7 @@ export default async function MyLearningPage({ searchParams }: { searchParams: P
                 <ul className="divide-y divide-slate-100 text-sm">
                   {classes.map((c) => (
                     <li key={c.s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                      <div><div className="font-medium text-navy-900">{c.s.title}</div><div className="text-xs text-slate-500">{c.s.startsAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" })} ET · {c.s.delivery === "LIVE_VIRTUAL" ? "live online" : c.s.location}</div></div>
+                      <div><div className="font-medium text-navy-900">{c.s.title}</div><div className="text-xs text-slate-500">{fmtDateTime(c.s.startsAt, false, ctx.tenant.timeZone)} · {c.s.delivery === "LIVE_VIRTUAL" ? "live online" : c.s.location}</div></div>
                       <div className="flex items-center gap-2">
                         {c.s.status === "CANCELLED" ? <Badge tone="gray">Cancelled</Badge> : <Badge tone={c.status === "PRESENT" ? "green" : c.status === "ABSENT" ? "red" : "blue"}>{c.status.toLowerCase()}</Badge>}
                         {c.s.meetingUrl && c.s.status === "SCHEDULED" && <a href={c.s.meetingUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-teal-700 hover:underline">Join link</a>}
@@ -59,7 +59,7 @@ export default async function MyLearningPage({ searchParams }: { searchParams: P
                   <ul className="divide-y divide-slate-100 text-sm">
                     {openClasses.map((c) => (
                       <li key={c.s.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                        <div><div className="font-medium text-navy-900">{c.s.title}</div><div className="text-xs text-slate-500">{c.s.startsAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" })} ET · {c.courseTitle}{c.s.capacity ? ` · ${Math.max(0, c.s.capacity - c.registered)} seats left` : ""}</div></div>
+                        <div><div className="font-medium text-navy-900">{c.s.title}</div><div className="text-xs text-slate-500">{fmtDateTime(c.s.startsAt, false, ctx.tenant.timeZone)} · {c.courseTitle}{c.s.capacity ? ` · ${Math.max(0, c.s.capacity - c.registered)} seats left` : ""}</div></div>
                         {c.s.capacity && c.registered >= c.s.capacity ? <Badge tone="gray">Full</Badge> : <form action={selfRegisterAction}><input type="hidden" name="sessionId" value={c.s.id} /><Button type="submit" variant="secondary">Register</Button></form>}
                       </li>
                     ))}

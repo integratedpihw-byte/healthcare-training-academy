@@ -1,4 +1,5 @@
 "use client";
+import { PasswordInput } from "@/components/password-input";
 import { useActionState } from "react";
 import { registerOrganizationAction } from "../actions";
 import { Alert, FACILITY_TYPE_LABELS, Field, Input, Select } from "@/components/ui";
@@ -65,11 +66,11 @@ export function RegisterOrgForm() {
           <Input id="adminEmail" name="adminEmail" type="email" autoComplete="email" required defaultValue={v.adminEmail} />
         </Field>
         <Field label="Password" name="password" error={e.password}>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={12} />
+          <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={12} />
         </Field>
         <PasswordHint />
         <Field label="Confirm password" name="confirm" error={e.confirm}>
-          <Input id="confirm" name="confirm" type="password" autoComplete="new-password" required />
+          <PasswordInput id="confirm" name="confirm" autoComplete="new-password" required />
         </Field>
       </fieldset>
       <label className="flex items-start gap-2 text-sm text-slate-700">

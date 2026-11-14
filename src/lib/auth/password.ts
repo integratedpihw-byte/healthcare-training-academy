@@ -1,4 +1,5 @@
 import { hash, verify } from "@node-rs/argon2";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 
 // OWASP-recommended Argon2id parameters (m=19 MiB, t=2, p=1).
@@ -65,3 +66,28 @@ export async function burnPasswordCheck(password: string) {
   dummyHash ??= hashPassword("timing-equalizer-Aa1!");
   await verifyPassword(await dummyHash, password);
 }
+
+/**
+ * Breached-password check against Have I Been Pwned using k-anonymity: only the first
+ * five characters of the SHA-1 hash leave the server, never the password. Fails open
+ * (returns false) when the service is unreachable so sign-up never depends on it.
+ * On in production builds unless PASSWORD_BREACH_CHECK=off; elsewhere only when set to "on".
+ */
+export async function isBreachedPassword(password: string, fetcher: typeof fetch = fetch): Promise<boolean> {
+  const setting = process.env.PASSWORD_BREACH_CHECK;
+  const enabled = setting === "on" || (setting !== "off" && process.env.NODE_ENV === "production");
+  if (fetcher === fetch && !enabled) return false;
+  const sha1 = createHash("sha1").update(password).digest("hex").toUpperCase();
+  try {
+    const res = await fetcher(`https://api.pwnedpasswords.com/range/${sha1.slice(0, 5)}`, { headers: { "Add-Padding": "true" }, signal: AbortSignal.timeout(2500) });
+    if (!res.ok) return false;
+    const suffix = sha1.slice(5);
+    return (await res.text()).split("\n").some((line) => {
+      const [h, n] = line.trim().split(":");
+      return h === suffix && Number(n) > 0;
+    });
+  } catch {
+    return false;
+  }
+}
+export const BREACHED_MESSAGE = "This password has appeared in a known data breach. Choose a different one.";

@@ -20,6 +20,17 @@ export function verifyTotp(secret: string, token: string): boolean {
   }
 }
 
+/** Like verifyTotp, but returns the matched 30-second time step (for replay protection) or null. */
+export function verifyTotpStep(secret: string, token: string): number | null {
+  if (!/^\d{6}$/.test(token)) return null;
+  try {
+    const r = verifySync({ secret, token, epochTolerance: 30 }) as { valid: boolean; timeStep?: number };
+    return r.valid ? (r.timeStep ?? Math.floor(Date.now() / 30_000)) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Test helper. */
 export function currentTotp(secret: string): string {
   return generateSync({ secret });

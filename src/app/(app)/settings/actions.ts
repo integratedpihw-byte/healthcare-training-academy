@@ -9,6 +9,7 @@ import {
   changePassword,
   confirmMfaEnrollment,
   disableMfa,
+  generateRecoveryCodes,
   revokeSessionById,
   switchTenant,
 } from "@/lib/auth/service";
@@ -48,7 +49,7 @@ export async function confirmMfaAction(_: FormState, fd: FormData): Promise<Form
   // The current session has proven possession of the factor.
   await systemDb().update(sessions).set({ mfaVerified: true }).where(eq(sessions.id, ctx.session.sessionId));
   revalidatePath("/settings/security");
-  return { ok: true, message: "Two-step verification is now on." };
+  return { ok: true, message: "Two-step verification is now on. Create your recovery codes next." };
 }
 
 export async function disableMfaAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -64,4 +65,10 @@ export async function revokeSessionAction(fd: FormData) {
   const id = String(fd.get("sessionId") ?? "");
   if (id && id !== ctx.session.sessionId) await revokeSessionById(systemDb(), ctx.user.id, id);
   revalidatePath("/settings/security");
+}
+
+export async function recoveryCodesAction(_: { codes?: string[]; error?: string } | undefined, fd: FormData): Promise<{ codes?: string[]; error?: string }> {
+  const ctx = await requireUser();
+  const codes = await generateRecoveryCodes(systemDb(), ctx.user.id, String(fd.get("password") ?? ""));
+  return codes ? { codes } : { error: "Password is incorrect." };
 }

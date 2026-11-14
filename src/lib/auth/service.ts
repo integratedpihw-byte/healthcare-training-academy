@@ -13,9 +13,10 @@ import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/db/client";
 import { memberships, passwordResetTokens, rateLimits, sessions, tenants, users } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
+import { randomBytes } from "node:crypto";
 import { decrypt, encrypt, randomToken, sha256 } from "./crypto";
-import { verifyTotp, newTotpSecret, totpUri } from "./mfa";
-import { burnPasswordCheck, hashPassword, passwordIssues, verifyPassword } from "./password";
+import { verifyTotp, verifyTotpStep, newTotpSecret, totpUri } from "./mfa";
+import { BREACHED_MESSAGE, burnPasswordCheck, hashPassword, isBreachedPassword, passwordIssues, verifyPassword } from "./password";
 import { rateLimit } from "./rate-limit";
 import { sendEmail } from "@/lib/notify/email";
 
@@ -150,6 +151,7 @@ export interface ResolvedSession {
     lastName: string;
     isPlatformAdmin: boolean;
     mfaEnabled: boolean;
+    emailVerified: boolean;
   };
 }
 
@@ -167,6 +169,7 @@ export async function resolveSession(db: Db, token: string | undefined | null): 
         lastName: users.lastName,
         isPlatformAdmin: users.isPlatformAdmin,
         mfaEnabled: users.mfaEnabled,
+        emailVerified: sql<boolean>`${users.emailVerifiedAt} is not null`,
         status: users.status,
         passwordChangedAt: users.passwordChangedAt,
       },
@@ -242,13 +245,50 @@ export async function verifyMfaForSession(
   const lim = await rateLimit(db, `mfa:${s.userId}`, 5, 5 * 60);
   if (!lim.allowed) return "rate_limited";
   const [u] = await db.select({ enc: users.mfaSecretEnc }).from(users).where(eq(users.id, s.userId));
-  if (!u?.enc || !verifyTotp(decrypt(u.enc), code.trim())) {
+  const input = code.trim();
+  let method: "totp" | "recovery" | null = null;
+  if (u?.enc && /^\d{6}$/.test(input)) {
+    const step = verifyTotpStep(decrypt(u.enc), input);
+    if (step !== null) {
+      // Each code is accepted once: the stored step only moves forward (atomic).
+      const fresh = await db.update(users).set({ mfaLastStep: step }).where(and(eq(users.id, s.userId), sql`(${users.mfaLastStep} is null or ${users.mfaLastStep} < ${step})`)).returning({ id: users.id });
+      if (fresh.length) method = "totp";
+    }
+  } else if (u?.enc && isRecoveryCodeFormat(input)) {
+    const hash = sha256(normalizeRecoveryCode(input));
+    const used = await db.update(users).set({ mfaRecoveryHashes: sql`array_remove(${users.mfaRecoveryHashes}, ${hash})` }).where(and(eq(users.id, s.userId), sql`${hash} = any(${users.mfaRecoveryHashes})`)).returning({ id: users.id });
+    if (used.length) method = "recovery";
+  }
+  if (!method) {
     await writeAudit(db, { tenantId: null, actorUserId: s.userId, action: "auth.mfa_failed", entityType: "user", entityId: s.userId, ipAddress: meta.ip });
     return "invalid";
   }
   await db.update(sessions).set({ mfaVerified: true }).where(eq(sessions.id, s.sessionId));
-  await writeAudit(db, { tenantId: null, actorUserId: s.userId, action: "auth.login", entityType: "user", entityId: s.userId, ipAddress: meta.ip });
+  await writeAudit(db, { tenantId: null, actorUserId: s.userId, action: method === "recovery" ? "auth.login_recovery_code" : "auth.login", entityType: "user", entityId: s.userId, ipAddress: meta.ip });
   return "ok";
+}
+
+// One-time recovery codes: ten codes like "K7QF2-9XDMP", stored only as SHA-256 hashes.
+const RECOVERY_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no look-alike characters
+const normalizeRecoveryCode = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const isRecoveryCodeFormat = (c: string) => normalizeRecoveryCode(c).length === 10 && /[A-Z]/i.test(c);
+
+export async function recoveryCodesRemaining(db: Db, userId: string): Promise<number> {
+  const [u] = await db.select({ n: sql<number>`cardinality(${users.mfaRecoveryHashes})` }).from(users).where(eq(users.id, userId));
+  return Number(u?.n ?? 0);
+}
+
+/** Replaces any existing recovery codes. Requires the password; the codes are returned once and never stored in clear. */
+export async function generateRecoveryCodes(db: Db, userId: string, password: string): Promise<string[] | null> {
+  const [u] = await db.select({ hash: users.passwordHash, mfaEnabled: users.mfaEnabled }).from(users).where(eq(users.id, userId));
+  if (!u?.mfaEnabled || !(await verifyPassword(u.hash, password))) return null;
+  const codes = Array.from({ length: 10 }, () => {
+    const raw = Array.from(randomBytes(10), (b) => RECOVERY_ALPHABET[b % RECOVERY_ALPHABET.length]).join("");
+    return `${raw.slice(0, 5)}-${raw.slice(5)}`;
+  });
+  await db.update(users).set({ mfaRecoveryHashes: codes.map((c) => sha256(normalizeRecoveryCode(c))) }).where(eq(users.id, userId));
+  await writeAudit(db, { tenantId: null, actorUserId: userId, action: "auth.recovery_codes_generated", entityType: "user", entityId: userId });
+  return codes;
 }
 
 /** Step 1 of enrollment: generate a secret (stored encrypted, not yet enabled). */
@@ -293,7 +333,7 @@ export async function requestPasswordReset(db: Db, rawEmail: string, meta: Reque
 export async function sendPasswordLink(db: Db, userId: string, email: string, kind: "reset" | "invite") {
   const token = randomToken(32);
   const minutes = kind === "invite" ? 72 * 60 : RESET_TOKEN_MINUTES;
-  await db.insert(passwordResetTokens).values({ userId, tokenHash: sha256(token), expiresAt: new Date(Date.now() + minutes * 60_000) });
+  await db.insert(passwordResetTokens).values({ userId, tokenHash: sha256(token), purpose: kind, expiresAt: new Date(Date.now() + minutes * 60_000) });
   const url = `${process.env.APP_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
   await sendEmail(
     kind === "invite"
@@ -314,7 +354,7 @@ export async function secureUnverifiedAccount(db: Db, userId: string, email: str
   const [u] = await db.select({ verified: users.emailVerifiedAt }).from(users).where(eq(users.id, userId));
   if (!u || u.verified) return false;
   await db.transaction(async (tx) => {
-    await tx.update(users).set({ passwordHash: await hashPassword(randomToken(48)), passwordChangedAt: sql`now()`, mfaEnabled: false, mfaSecretEnc: null }).where(eq(users.id, userId));
+    await tx.update(users).set({ passwordHash: await hashPassword(randomToken(48)), passwordChangedAt: sql`now()`, mfaEnabled: false, mfaSecretEnc: null, mfaRecoveryHashes: [], mfaLastStep: null }).where(eq(users.id, userId));
     await tx.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
     await tx.update(passwordResetTokens).set({ usedAt: new Date() }).where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
     await writeAudit(tx, { tenantId: null, actorUserId: userId, action: "auth.unverified_account_secured", entityType: "user", entityId: userId });
@@ -331,10 +371,11 @@ export async function resetPassword(db: Db, token: string, newPassword: string):
     .select({ id: passwordResetTokens.id, userId: passwordResetTokens.userId, email: users.email, firstName: users.firstName, lastName: users.lastName })
     .from(passwordResetTokens)
     .innerJoin(users, eq(users.id, passwordResetTokens.userId))
-    .where(and(eq(passwordResetTokens.tokenHash, sha256(token)), isNull(passwordResetTokens.usedAt), gt(passwordResetTokens.expiresAt, now)))
+    .where(and(eq(passwordResetTokens.tokenHash, sha256(token)), sql`${passwordResetTokens.purpose} in ('reset','invite')`, isNull(passwordResetTokens.usedAt), gt(passwordResetTokens.expiresAt, now)))
     .limit(1);
   if (!t) return { ok: false, error: "This reset link is invalid or has expired." };
   const issues = passwordIssues(newPassword, [t.email, t.firstName, t.lastName]);
+  if (!issues.length && (await isBreachedPassword(newPassword))) issues.push(BREACHED_MESSAGE);
   if (issues.length) return { ok: false, error: "Password does not meet requirements.", issues };
 
   const passwordHash = await hashPassword(newPassword);
@@ -371,6 +412,7 @@ export async function changePassword(
   const [u] = await db.select().from(users).where(eq(users.id, userId));
   if (!u || !(await verifyPassword(u.passwordHash, current))) return { ok: false, error: "Current password is incorrect." };
   const issues = passwordIssues(next, [u.email, u.firstName, u.lastName]);
+  if (!issues.length && (await isBreachedPassword(next))) issues.push(BREACHED_MESSAGE);
   if (issues.length) return { ok: false, error: "Password does not meet requirements.", issues };
   if (await verifyPassword(u.passwordHash, next)) return { ok: false, error: "Choose a password different from your current one." };
   const passwordHash = await hashPassword(next);
@@ -393,7 +435,7 @@ export async function disableMfa(db: Db, userId: string, password: string, code:
   if (!u?.mfaEnabled || !u.mfaSecretEnc) return false;
   if (!(await verifyPassword(u.passwordHash, password))) return false;
   if (!verifyTotp(decrypt(u.mfaSecretEnc), code.trim())) return false;
-  await db.update(users).set({ mfaEnabled: false, mfaSecretEnc: null }).where(eq(users.id, userId));
+  await db.update(users).set({ mfaEnabled: false, mfaSecretEnc: null, mfaRecoveryHashes: [], mfaLastStep: null }).where(eq(users.id, userId));
   await writeAudit(db, { tenantId: null, actorUserId: userId, action: "auth.mfa_disabled", entityType: "user", entityId: userId });
   return true;
 }
@@ -425,4 +467,45 @@ export async function purgeExpiredAuthData(db: Db): Promise<{ sessions: number; 
   const t = await db.execute(sql`delete from password_reset_tokens where expires_at < now() - interval '7 days'`);
   const r = await db.execute(sql`delete from rate_limits where window_start < now() - interval '1 day'`);
   return { sessions: s.rowCount ?? 0, resetTokens: t.rowCount ?? 0, rateLimits: r.rowCount ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Email verification (self-registration)
+// ---------------------------------------------------------------------------
+
+const VERIFY_HOURS = 48;
+
+/** "required": unverified self-registered users must confirm before using the app. Defaults to required when a real email provider is configured. */
+export function emailVerificationRequired(): boolean {
+  const v = process.env.EMAIL_VERIFICATION;
+  if (v === "required") return true;
+  if (v === "optional") return false;
+  return !!process.env.EMAIL_PROVIDER && process.env.EMAIL_PROVIDER !== "console";
+}
+
+/** Emails a confirmation link (rate limited per account). Returns false when throttled or already verified. */
+export async function sendVerificationEmail(db: Db, userId: string): Promise<boolean> {
+  const [u] = await db.select({ email: users.email, verified: users.emailVerifiedAt }).from(users).where(eq(users.id, userId));
+  if (!u || u.verified) return false;
+  if (!(await rateLimit(db, `verify-email:${userId}`, 5, 60 * 60)).allowed) return false;
+  const token = randomToken(32);
+  await db.insert(passwordResetTokens).values({ userId, tokenHash: sha256(token), purpose: "verify", expiresAt: new Date(Date.now() + VERIFY_HOURS * 3_600_000) });
+  const url = `${process.env.APP_URL ?? "http://localhost:3000"}/verify-email?token=${token}`;
+  await sendEmail({ to: u.email, subject: "Confirm your email for Complete Healthcare Innovative Training Academy", text: `Confirm that this email address belongs to you (link valid ${VERIFY_HOURS} hours):\n${url}\n\nIf you did not create an account, you can ignore this email.` });
+  return true;
+}
+
+/** Confirms the address for a valid link. Idempotent for the same link while it is unexpired. */
+export async function verifyEmail(db: Db, token: string): Promise<boolean> {
+  if (!token || token.length > 100) return false;
+  const [t] = await db
+    .select({ id: passwordResetTokens.id, userId: passwordResetTokens.userId })
+    .from(passwordResetTokens)
+    .where(and(eq(passwordResetTokens.tokenHash, sha256(token)), eq(passwordResetTokens.purpose, "verify"), gt(passwordResetTokens.expiresAt, new Date())))
+    .limit(1);
+  if (!t) return false;
+  await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(and(eq(passwordResetTokens.id, t.id), isNull(passwordResetTokens.usedAt)));
+  const done = await db.update(users).set({ emailVerifiedAt: new Date() }).where(and(eq(users.id, t.userId), isNull(users.emailVerifiedAt))).returning({ id: users.id });
+  if (done.length) await writeAudit(db, { tenantId: null, actorUserId: t.userId, action: "auth.email_verified", entityType: "user", entityId: t.userId });
+  return true;
 }

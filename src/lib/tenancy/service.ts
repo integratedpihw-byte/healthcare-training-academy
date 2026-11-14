@@ -21,6 +21,8 @@ import {
 import { writeAudit } from "@/lib/audit";
 import { hashPassword, passwordIssues } from "@/lib/auth/password";
 import { normalizeEmail, secureUnverifiedAccount, sendPasswordLink } from "@/lib/auth/service";
+import { BREACHED_MESSAGE, isBreachedPassword } from "@/lib/auth/password";
+import { TIME_ZONES } from "@/lib/time";
 import { randomToken } from "@/lib/auth/crypto";
 import type { SystemRoleKey } from "@/lib/rbac/catalog";
 
@@ -84,6 +86,7 @@ export async function registerOrganization(
   const input = parsed.data;
   const email = normalizeEmail(input.adminEmail);
   const issues = passwordIssues(input.password, [email, input.adminFirstName, input.adminLastName]);
+  if (!issues.length && (await isBreachedPassword(input.password))) issues.push(BREACHED_MESSAGE);
   if (issues.length) return { ok: false, error: "Password does not meet requirements.", fieldErrors: { password: issues } };
 
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
@@ -175,6 +178,7 @@ export async function registerIndividual(db: Db, raw: unknown): Promise<ServiceR
   const input = parsed.data;
   const email = normalizeEmail(input.email);
   const issues = passwordIssues(input.password, [email, input.firstName, input.lastName]);
+  if (!issues.length && (await isBreachedPassword(input.password))) issues.push(BREACHED_MESSAGE);
   if (issues.length) return { ok: false, error: "Password does not meet requirements.", fieldErrors: { password: issues } };
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
   if (existing) return { ok: false, error: "An account with this email already exists.", fieldErrors: { email: ["Email already registered"] } };
@@ -261,6 +265,8 @@ export const organizationProfileSchema = z.object({
   city: z.string().trim().max(100).optional().or(z.literal("")),
   state: usState,
   postalCode: z.string().trim().max(12).optional().or(z.literal("")),
+  timeZone: z.enum(TIME_ZONES.map((t) => t.id) as [string, ...string[]]).optional(),
+  mfaPolicy: z.enum(["ADMINS", "ALL", "OFF"]).optional(),
 });
 
 export async function updateOrganization(tx: Tx, ctx: { tenantId: string; userId: string }, orgId: string, raw: unknown): Promise<ServiceResult<null>> {
@@ -279,6 +285,8 @@ export async function updateOrganization(tx: Tx, ctx: { tenantId: string; userId
     city: v.city || null,
     state: v.state,
     postalCode: v.postalCode || null,
+    ...(v.timeZone ? { timeZone: v.timeZone } : {}),
+    ...(v.mfaPolicy ? { mfaPolicy: v.mfaPolicy } : {}),
   };
   await tx.update(organizations).set(values).where(eq(organizations.id, orgId));
   await writeAudit(tx, { tenantId: ctx.tenantId, actorUserId: ctx.userId, action: "organization.updated", entityType: "organization", entityId: orgId, before, after: values });

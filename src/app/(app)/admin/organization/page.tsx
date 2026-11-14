@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/auth/context";
 import { organizations } from "@/db/schema";
-import { Card, Field, Input, PageHeader } from "@/components/ui";
+import { Card, Field, Input, PageHeader, Select } from "@/components/ui";
+import { TIME_ZONES } from "@/lib/time";
 import { ActionForm } from "@/components/action-form";
 import { updateOrganizationAction } from "../actions";
 
@@ -28,6 +29,16 @@ export default async function OrgPage() {
               <Field label="State" name="state"><Input id="state" name="state" maxLength={2} defaultValue={org.state} required /></Field>
               <Field label="ZIP" name="postalCode"><Input id="postalCode" name="postalCode" defaultValue={org.postalCode ?? ""} /></Field>
             </div>
+            <Field label="Time zone" name="timeZone" hint="Dates and times are shown to your staff in this zone.">
+              <Select id="timeZone" name="timeZone" defaultValue={org.timeZone}>{TIME_ZONES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</Select>
+            </Field>
+            <Field label="Two-step verification" name="mfaPolicy" hint="Who must sign in with an authenticator app. People it applies to set it up at their next sign-in.">
+              <Select id="mfaPolicy" name="mfaPolicy" defaultValue={org.mfaPolicy}>
+                <option value="ADMINS">Required for administrators (recommended)</option>
+                <option value="ALL">Required for everyone</option>
+                <option value="OFF">Optional (not recommended)</option>
+              </Select>
+            </Field>
           </div>
         </ActionForm>
       </Card>

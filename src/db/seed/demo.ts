@@ -149,7 +149,7 @@ export async function seedDemo(db: Db): Promise<{ created: string[]; skipped: st
         .returning({ id: tenants.id });
       const [org] = await tx
         .insert(organizations)
-        .values({ tenantId: tenant.id, legalName: t.name.replace(" (DEMO)", " LLC (DEMO)"), displayName: t.name, state: "FL" })
+        .values({ tenantId: tenant.id, legalName: t.name.replace(" (DEMO)", " LLC (DEMO)"), displayName: t.name, state: "FL", mfaPolicy: "OFF" })
         .returning({ id: organizations.id });
       const fac = new Map<string, string>();
       for (const f of t.facilities) {

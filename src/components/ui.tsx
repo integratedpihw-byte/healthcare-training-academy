@@ -192,12 +192,12 @@ export const FACILITY_TYPE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-/** Display time zone for timestamps (Florida-first; shown with an explicit "ET" label). */
+/** Default display time zone (Florida-first); organizations choose their own in Administration. */
 export const DISPLAY_TZ = "America/New_York";
-/** Date and time in Eastern Time, labelled, so server and browser always agree. */
-export function fmtDateTime(d: Date | null | undefined, seconds = false) {
+/** Date and time in the given zone with its abbreviation (e.g. "Nov 14, 2026, 9:05 AM EST"), identical on server and browser. */
+export function fmtDateTime(d: Date | null | undefined, seconds = false, timeZone: string = DISPLAY_TZ) {
   if (!d) return "—";
-  return `${d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: seconds ? "medium" : "short", timeZone: DISPLAY_TZ })} ET`;
+  return d.toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", ...(seconds ? { second: "2-digit" } : {}), timeZone, timeZoneName: "short" });
 }
 
 export function fmtDate(d: Date | string | null | undefined) {

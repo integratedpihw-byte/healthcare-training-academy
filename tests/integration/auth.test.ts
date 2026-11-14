@@ -214,3 +214,51 @@ describe("email ownership (account pre-registration)", () => {
     if (live.status === "ok") expect(await resolveSession(db, live.token)).not.toBeNull();
   });
 });
+
+describe("two-step verification hardening", () => {
+  it("accepts each authenticator code once, and each recovery code once", async () => {
+    const { generateRecoveryCodes, recoveryCodesRemaining } = await import("@/lib/auth/service");
+    const db = systemDb();
+    const t = await createTenant("mfa2");
+    const { secret } = await beginMfaEnrollment(db, t.adminUserId);
+    expect(await confirmMfaEnrollment(db, t.adminUserId, currentTotp(secret))).toBe(true);
+    expect(await generateRecoveryCodes(db, t.adminUserId, "wrong-password")).toBeNull();
+    const codes = (await generateRecoveryCodes(db, t.adminUserId, PW))!;
+    expect(codes).toHaveLength(10);
+    const [u] = await db.select().from(users).where(eq(users.id, t.adminUserId));
+    expect(u.mfaRecoveryHashes.join()).not.toContain(codes[0].replace("-", "")); // only hashes are stored
+
+    const signIn = async () => { const r = await login(db, { email: t.adminEmail, password: PW }, meta()); if (r.status !== "mfa_required") throw new Error(r.status); return r.token; };
+    const code = currentTotp(secret);
+    expect(await verifyMfaForSession(db, await signIn(), code)).toBe("ok");
+    await db.delete(rateLimits).where(eq(rateLimits.key, `mfa:${t.adminUserId}`));
+    expect(await verifyMfaForSession(db, await signIn(), code)).toBe("invalid"); // same code replayed
+
+    await db.delete(rateLimits).where(eq(rateLimits.key, `mfa:${t.adminUserId}`));
+    expect(await verifyMfaForSession(db, await signIn(), codes[0].toLowerCase())).toBe("ok");
+    expect(await verifyMfaForSession(db, await signIn(), codes[0])).toBe("invalid"); // spent
+    expect(await recoveryCodesRemaining(db, t.adminUserId)).toBe(9);
+  });
+});
+
+describe("email confirmation", () => {
+  it("confirms the address with the emailed link; that link cannot set a password", async () => {
+    const { registerIndividual } = await import("@/lib/tenancy/service");
+    const { sendVerificationEmail, verifyEmail } = await import("@/lib/auth/service");
+    const db = systemDb();
+    const email = `new-${Date.now()}@learner.example`;
+    const reg = await registerIndividual(db, { firstName: "Casey", lastName: "Morgan", email, password: "Quiet-Harbor#2026", state: "FL", acceptTerms: true });
+    if (!reg.ok) throw new Error(reg.error);
+    const sent = consoleOutbox.length;
+    expect(await sendVerificationEmail(db, reg.data.userId)).toBe(true);
+    const token = /verify-email\?token=([\w-]+)/.exec(consoleOutbox.slice(sent).find((m) => m.to === email)!.text)![1];
+
+    expect((await resetPassword(db, token, "Another-Secret#2026")).ok).toBe(false); // wrong kind of link
+    expect(await verifyEmail(db, "not-a-real-token-000000000000")).toBe(false);
+    const s1 = await login(db, { email, password: "Quiet-Harbor#2026" }, meta());
+    expect(s1.status === "ok" && (await resolveSession(db, s1.token))!.user.emailVerified).toBe(false);
+    expect(await verifyEmail(db, token)).toBe(true);
+    expect(s1.status === "ok" && (await resolveSession(db, s1.token))!.user.emailVerified).toBe(true);
+    expect(await sendVerificationEmail(db, reg.data.userId)).toBe(false); // nothing left to confirm
+  });
+});

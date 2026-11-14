@@ -36,8 +36,8 @@ test("training director schedules a class and registers a learner; the learner s
   await expect(page.getByRole("link", { name: "Bloodborne Pathogens — live Q&A (DEMO)" })).toBeVisible();
   await page.getByLabel("Title").fill(`Fire safety walkthrough ${stamp}`);
   await page.getByLabel("Location / room").fill("Main lobby");
-  await page.getByLabel("Starts (ET)").fill(inDays(7, "09:00"));
-  await page.getByLabel("Ends (ET)").fill(inDays(7, "10:00"));
+  await page.getByLabel(/^Starts/).fill(inDays(7, "09:00"));
+  await page.getByLabel(/^Ends/).fill(inDays(7, "10:00"));
   await page.getByLabel("Capacity").fill("10");
   await page.getByRole("button", { name: "Schedule class" }).click();
   await expect(page.getByRole("heading", { name: `Fire safety walkthrough ${stamp}` })).toBeVisible();

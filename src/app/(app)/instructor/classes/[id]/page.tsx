@@ -8,7 +8,6 @@ import { InstructorNav } from "../../nav";
 import { attendanceAction, messageAction, registerAttendeesAction, sessionStatusAction } from "../../class-actions";
 
 export const metadata = { title: "Class" };
-const when = (d: Date) => d.toLocaleString("en-US", { dateStyle: "full", timeStyle: "short", timeZone: "America/New_York" }) + " ET";
 const TONE = { REGISTERED: "blue", PRESENT: "green", ABSENT: "red", EXCUSED: "gray" } as const;
 
 export default async function ClassPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +30,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
   const candidates = d.members.filter((m) => !onRoster.has(m.id));
   return (
     <>
-      <PageHeader title={s.title} description={`${when(s.startsAt)} – ${s.endsAt.toLocaleTimeString("en-US", { timeStyle: "short", timeZone: "America/New_York" })}`} actions={<Link href="/instructor/classes" className="text-sm font-semibold text-teal-700 hover:underline">← Classes</Link>} />
+      <PageHeader title={s.title} description={`${s.startsAt.toLocaleString("en-US", { dateStyle: "full", timeStyle: "short", timeZone: ctx.tenant.timeZone })} – ${s.endsAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: ctx.tenant.timeZone, timeZoneName: "short" })}`} actions={<Link href="/instructor/classes" className="text-sm font-semibold text-teal-700 hover:underline">← Classes</Link>} />
       <InstructorNav ctx={ctx} active="classes" />
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">

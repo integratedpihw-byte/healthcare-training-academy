@@ -1,5 +1,6 @@
 // Tenancy, organizations, identity, roles/permissions and workforce.
 import {
+  bigint,
   boolean,
   char,
   date,
@@ -74,6 +75,10 @@ export const organizations = pgTable(
     city: text(),
     state: char({ length: 2 }).notNull().default("FL"),
     postalCode: text(),
+    /** IANA zone used to display dates and times to this organization's users. */
+    timeZone: text().notNull().default("America/New_York"),
+    /** Who must use two-step verification: ADMINS (users who manage people or settings), ALL or OFF. */
+    mfaPolicy: text().notNull().default("ADMINS"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -141,6 +146,10 @@ export const users = pgTable("users", {
   emailVerifiedAt: tstz(),
   mfaEnabled: boolean().notNull().default(false),
   mfaSecretEnc: text(),
+  /** SHA-256 hashes of unused one-time recovery codes. */
+  mfaRecoveryHashes: text().array().notNull().default([]),
+  /** Last accepted TOTP time step (a code cannot be used twice). */
+  mfaLastStep: bigint({ mode: "number" }),
   failedLoginCount: integer().notNull().default(0),
   lockedUntil: tstz(),
   passwordChangedAt: tstz().notNull().defaultNow(),
@@ -178,6 +187,8 @@ export const passwordResetTokens = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     tokenHash: text().notNull().unique(),
+    /** reset | invite (both set a password) or verify (confirms the email address only). */
+    purpose: text().notNull().default("reset"),
     expiresAt: tstz().notNull(),
     usedAt: tstz(),
     createdAt: createdAt(),

@@ -337,7 +337,7 @@ export const REPORTS: ReportDef[] = [
       const { from, to } = range(p);
       const rows = (
         await tx.execute<{ date: string; class: string; course: string | null; instructor: string | null; facility: string | null; status: string; registered: number; present: number; absent: number; excused: number; rate: string }>(sql`
-        select to_char(s.starts_at at time zone 'America/New_York', 'YYYY-MM-DD HH24:MI') date, s.title class, c.title course,
+        select to_char(s.starts_at at time zone coalesce((select time_zone from organizations limit 1), 'America/New_York'), 'YYYY-MM-DD HH24:MI') date, s.title class, c.title course,
                (select u.first_name || ' ' || u.last_name from instructors i join users u on u.id = i.user_id where i.id = s.instructor_id) instructor,
                f.name facility, initcap(s.status::text) status,
                count(a.id)::int registered,
@@ -350,7 +350,7 @@ export const REPORTS: ReportDef[] = [
           left join courses c on c.id = s.course_id
           left join facilities f on f.id = s.facility_id
           left join attendance a on a.session_id = s.id
-         where (s.starts_at at time zone 'America/New_York')::date between ${from}::date and ${to}::date
+         where (s.starts_at at time zone coalesce((select time_zone from organizations limit 1), 'America/New_York'))::date between ${from}::date and ${to}::date
            and (${p.facilityId ?? null}::uuid is null or s.facility_id = ${p.facilityId ?? null}::uuid)
          group by s.id, c.title, f.name order by s.starts_at`)
       ).rows;

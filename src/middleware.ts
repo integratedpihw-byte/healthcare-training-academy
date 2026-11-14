@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
  *    Real authentication/authorization happens server-side on every request
  *    (requireUser / requireTenant / requirePermission) — this is defense in depth only.
  */
-const PUBLIC = [/^\/$/, /^\/login(\/.*)?$/, /^\/register(\/.*)?$/, /^\/forgot-password$/, /^\/reset-password$/, /^\/verify(\/.*)?$/, /^\/forbidden$/, /^\/(terms|privacy|help)$/];
+const PUBLIC = [/^\/$/, /^\/login(\/.*)?$/, /^\/register(\/.*)?$/, /^\/forgot-password$/, /^\/reset-password$/, /^\/verify(\/.*)?$/, /^\/forbidden$/, /^\/(terms|privacy|help|verify-email)$/];
 const COOKIES = ["__Host-chta_session", "chta_session"];
 
 export function buildCsp(nonce: string, dev = process.env.NODE_ENV !== "production", https = false) {

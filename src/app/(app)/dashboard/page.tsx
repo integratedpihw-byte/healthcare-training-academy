@@ -163,7 +163,7 @@ export default async function DashboardPage() {
               <Table head={["When", "Who", "Action"]} empty={d.recentAudit.length === 0 ? <EmptyState>No activity recorded yet.</EmptyState> : undefined}>
                 {d.recentAudit.map((a) => (
                   <tr key={a.id}>
-                    <Td className="whitespace-nowrap">{fmtDateTime(a.createdAt)}</Td>
+                    <Td className="whitespace-nowrap">{fmtDateTime(a.createdAt, false, ctx.tenant.timeZone)}</Td>
                     <Td>{a.actorFirst ? `${a.actorFirst} ${a.actorLast}` : "System"}</Td>
                     <Td><code className="text-xs">{a.action}</code></Td>
                   </tr>

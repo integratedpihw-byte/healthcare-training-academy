@@ -11,8 +11,8 @@ export function MfaForm({ next }: { next?: string }) {
       <form action={action} className="mt-5 space-y-4">
         {state?.error && <Alert>{state.error}</Alert>}
         <input type="hidden" name="next" value={next ?? "/dashboard"} />
-        <Field label="Verification code" name="code">
-          <Input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9 ]{6,7}" maxLength={7} required autoFocus />
+        <Field label="Verification code" name="code" hint="No phone? Enter one of your recovery codes instead.">
+          <Input id="code" name="code" autoComplete="one-time-code" maxLength={14} required autoFocus autoCapitalize="characters" spellCheck={false} />
         </Field>
         <SubmitButton className="w-full" pendingText="Verifying…">Verify</SubmitButton>
       </form>

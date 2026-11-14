@@ -23,3 +23,16 @@ export function utcToZonedInput(date: Date, timeZone: string): string {
   const g = (k: string) => parts.find((p) => p.type === k)!.value;
   return `${g("year")}-${g("month")}-${g("day")}T${g("hour")}:${g("minute")}`;
 }
+
+/** Time zones an organization can choose for displaying dates and times. */
+export const TIME_ZONES = [
+  { id: "America/New_York", label: "Eastern Time" },
+  { id: "America/Chicago", label: "Central Time" },
+  { id: "America/Denver", label: "Mountain Time" },
+  { id: "America/Phoenix", label: "Arizona (no daylight saving)" },
+  { id: "America/Los_Angeles", label: "Pacific Time" },
+  { id: "America/Anchorage", label: "Alaska Time" },
+  { id: "Pacific/Honolulu", label: "Hawaii Time" },
+  { id: "America/Puerto_Rico", label: "Atlantic Time (Puerto Rico)" },
+] as const;
+export const DEFAULT_TIME_ZONE = "America/New_York";

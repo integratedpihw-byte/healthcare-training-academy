@@ -41,7 +41,7 @@ export default async function NotificationsPage() {
                   <div>
                     <div className="flex items-center gap-2"><span className="font-medium text-navy-900">{n.title}</span>{!n.readAt && <Badge tone="teal">New</Badge>}</div>
                     <p className="text-sm text-slate-600">{n.body}</p>
-                    <p className="mt-0.5 text-xs text-slate-500">{fmtDateTime(n.createdAt)}{n.link && <> · <Link href={n.link} className="font-semibold text-teal-700 hover:underline">Open</Link></>}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{fmtDateTime(n.createdAt, false, ctx.tenant.timeZone)}{n.link && <> · <Link href={n.link} className="font-semibold text-teal-700 hover:underline">Open</Link></>}</p>
                   </div>
                   {!n.readAt && <form action={markReadAction}><input type="hidden" name="id" value={n.id} /><button className="text-xs font-semibold text-teal-700 hover:underline" type="submit">Mark read</button></form>}
                 </li>

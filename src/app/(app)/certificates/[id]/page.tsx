@@ -74,7 +74,7 @@ export default async function CertificatePage({ params, searchParams }: { params
           )}
           {verifications.length > 0 && (
             <Card title="Recent verifications">
-              <ul className="space-y-1 text-xs text-slate-600">{verifications.map((v) => <li key={v.id}>{fmtDateTime(v.verifiedAt)}</li>)}</ul>
+              <ul className="space-y-1 text-xs text-slate-600">{verifications.map((v) => <li key={v.id}>{fmtDateTime(v.verifiedAt, false, ctx.tenant.timeZone)}</li>)}</ul>
             </Card>
           )}
         </div>

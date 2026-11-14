@@ -1,4 +1,5 @@
 "use client";
+import { PasswordInput } from "@/components/password-input";
 import { useActionState } from "react";
 import { registerIndividualAction } from "../../actions";
 import { Alert, Field, Input } from "@/components/ui";
@@ -18,9 +19,9 @@ export function RegisterIndividualForm() {
       </div>
       <Field label="Email" name="email" error={e.email}><Input id="email" name="email" type="email" autoComplete="email" required defaultValue={v.email} /></Field>
       <Field label="State" name="state" error={e.state}><Input id="state" name="state" maxLength={2} defaultValue={v.state ?? "FL"} /></Field>
-      <Field label="Password" name="password" error={e.password}><Input id="password" name="password" type="password" autoComplete="new-password" required /></Field>
+      <Field label="Password" name="password" error={e.password}><PasswordInput id="password" name="password" autoComplete="new-password" required /></Field>
       <PasswordHint />
-      <Field label="Confirm password" name="confirm" error={e.confirm}><Input id="confirm" name="confirm" type="password" autoComplete="new-password" required /></Field>
+      <Field label="Confirm password" name="confirm" error={e.confirm}><PasswordInput id="confirm" name="confirm" autoComplete="new-password" required /></Field>
       <label className="flex items-start gap-2 text-sm text-slate-700">
         <input type="checkbox" name="acceptTerms" className="mt-1" required />
         <span>I agree to the <a href="/terms" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener" className="font-semibold text-teal-700 underline">Privacy Policy</a>.</span>

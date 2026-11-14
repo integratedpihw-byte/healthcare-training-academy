@@ -8,6 +8,8 @@ import {
   requestPasswordReset,
   resetPassword,
   revokeSession,
+  sendVerificationEmail,
+  emailVerificationRequired,
   verifyMfaForSession,
 } from "@/lib/auth/service";
 import { clearSessionCookie, requestMeta, sessionToken, setSessionCookie } from "@/lib/auth/context";
@@ -58,7 +60,7 @@ export async function mfaAction(_: FormState, fd: FormData): Promise<FormState> 
   const code = String(fd.get("code") ?? "").replace(/\s/g, "");
   const r = await verifyMfaForSession(systemDb(), token, code, await requestMeta());
   if (r === "ok") redirect(safeNext(fd.get("next")));
-  return { error: r === "rate_limited" ? "Too many attempts. Wait a few minutes and try again." : "That code is not valid. Check your authenticator app." };
+  return { error: r === "rate_limited" ? "Too many attempts. Wait a few minutes and try again." : "That code is not valid. Check your authenticator app, or use an unused recovery code." };
 }
 
 export async function logoutAction() {
@@ -110,7 +112,8 @@ export async function registerOrganizationAction(_: FormState, fd: FormData): Pr
   if (!r.ok) return { error: r.error, fieldErrors: r.fieldErrors, values: formValues(fd) };
   const l = await login(systemDb(), { email: String(fd.get("adminEmail")), password: String(fd.get("password")) }, await requestMeta());
   if (l.status === "ok") await setSessionCookie(l.token);
-  redirect("/account/organization-status?registered=1");
+  await sendVerificationEmail(systemDb(), r.data.userId);
+  redirect(emailVerificationRequired() ? "/account/verify-email?sent=1" : "/account/organization-status?registered=1");
 }
 
 export async function registerIndividualAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -127,5 +130,15 @@ export async function registerIndividualAction(_: FormState, fd: FormData): Prom
   if (!r.ok) return { error: r.error, fieldErrors: r.fieldErrors, values: formValues(fd) };
   const l = await login(systemDb(), { email: String(fd.get("email")), password: String(fd.get("password")) }, await requestMeta());
   if (l.status === "ok") await setSessionCookie(l.token);
-  redirect("/dashboard");
+  await sendVerificationEmail(systemDb(), r.data.userId);
+  redirect(emailVerificationRequired() ? "/account/verify-email?sent=1" : "/dashboard");
+}
+
+export async function resendVerificationAction(): Promise<void> {
+  const token = await sessionToken();
+  const { resolveSession } = await import("@/lib/auth/service");
+  const s = await resolveSession(systemDb(), token);
+  if (!s) redirect("/login");
+  const sent = await sendVerificationEmail(systemDb(), s.userId);
+  redirect(`/account/verify-email?${sent ? "sent=1" : "throttled=1"}`);
 }

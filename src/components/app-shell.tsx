@@ -1,8 +1,9 @@
+import { MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import Link from "next/link";
 import { Bell, Building2, CreditCard, LayoutDashboard, LogOut, Settings, ShieldCheck, BookOpen, GraduationCap, ClipboardList, Users, BadgeCheck, Award, Scale, Presentation, BarChart3 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
-import { Logo, cn } from "./ui";
+import { Logo } from "./ui";
 import { NavLink } from "./nav-link";
 import type { NavItem } from "@/lib/nav";
 
@@ -103,14 +104,7 @@ export function AppShell({
             <Logo light />
             <form action={logoutAction}><button className="min-h-9 rounded px-3 text-sm font-medium text-white" type="submit">Sign out</button></form>
           </header>
-          <nav aria-label="Main (mobile)" className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-2 py-2 md:hidden">
-            {nav.map((n) => (
-              <Link key={n.key} href={n.href} className={cn("whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-navy-800 hover:bg-navy-50")}>
-                {n.label}
-              </Link>
-            ))}
-            {isPlatformAdmin && <Link href="/platform" className="whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium text-navy-800">Platform</Link>}
-          </nav>
+          <MobileNav items={[...nav.map((n) => ({ key: n.key, href: n.href, label: n.label, badge: n.key === "notifications" ? unread : undefined })), ...(isPlatformAdmin ? [{ key: "platform", href: "/platform", label: "Platform Console" }] : []), { key: "help", href: "/help", label: "Help" }]} />
           <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
           <SiteFooter className="px-4 pb-8 pt-2" />
         </div>

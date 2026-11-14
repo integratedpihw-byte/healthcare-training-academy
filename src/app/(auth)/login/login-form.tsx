@@ -1,4 +1,5 @@
 "use client";
+import { PasswordInput } from "@/components/password-input";
 import { useActionState } from "react";
 import { loginAction } from "../actions";
 import { Alert, Field, Input } from "@/components/ui";
@@ -14,7 +15,7 @@ export function LoginForm({ next }: { next?: string }) {
         <Input id="email" name="email" type="email" autoComplete="username" required defaultValue={state?.values?.email} />
       </Field>
       <Field label="Password" name="password">
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <PasswordInput id="password" name="password" autoComplete="current-password" required />
       </Field>
       <SubmitButton className="w-full" pendingText="Signing in…">Sign in</SubmitButton>
     </form>

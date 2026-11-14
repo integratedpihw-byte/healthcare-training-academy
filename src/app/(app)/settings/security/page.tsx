@@ -1,8 +1,10 @@
 import { requireUser } from "@/lib/auth/context";
 import { systemDb } from "@/db/server";
-import { listSessions } from "@/lib/auth/service";
+import { listSessions, recoveryCodesRemaining } from "@/lib/auth/service";
+import { RecoveryCodes } from "./recovery-codes";
 import { Alert, Badge, Card, Field, Input, PageHeader, Table, Td, fmtDateTime } from "@/components/ui";
 import { ActionForm } from "@/components/action-form";
+import { PasswordInput } from "@/components/password-input";
 import { PasswordHint } from "@/components/password-hint";
 import { changePasswordAction, disableMfaAction, revokeSessionAction } from "../actions";
 import { MfaSetup } from "./mfa-setup";
@@ -13,10 +15,11 @@ export default async function SecurityPage({ searchParams }: { searchParams: Pro
   const ctx = await requireUser();
   const mfaRequired = (await searchParams).required === "mfa" && !ctx.user.mfaEnabled;
   const list = await listSessions(systemDb(), ctx.user.id);
+  const recoveryLeft = ctx.user.mfaEnabled ? await recoveryCodesRemaining(systemDb(), ctx.user.id) : 0;
   return (
     <>
       <PageHeader title="Security" description="Protect your account. Administrators should always use two-step verification." />
-      {mfaRequired && <div className="mb-6"><Alert tone="amber"><strong>Two-step verification is required for platform administrators.</strong> Set it up below with an authenticator app, then return to the Platform Console.</Alert></div>}
+      {mfaRequired && <div className="mb-6"><Alert tone="amber"><strong>Two-step verification is required for your account.</strong> {ctx.user.isPlatformAdmin ? "Platform administrators must use it." : "Your organization requires it for your role."} Set it up below with an authenticator app, then continue to your dashboard.</Alert></div>}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title={<span className="flex items-center gap-2">Two-step verification {ctx.user.mfaEnabled ? <Badge tone="green">On</Badge> : <Badge tone="amber">Off</Badge>}</span>}>
           {ctx.user.mfaEnabled ? (
@@ -27,12 +30,13 @@ export default async function SecurityPage({ searchParams }: { searchParams: Pro
             </ActionForm>
           ) : <MfaSetup />}
         </Card>
+        {ctx.user.mfaEnabled && <Card title="Recovery codes"><RecoveryCodes remaining={recoveryLeft} /></Card>}
         <Card title="Change password">
           <ActionForm action={changePasswordAction} submitLabel="Change password" pendingText="Saving…" resetOnSuccess>
-            <Field label="Current password" name="current"><Input id="current" name="current" type="password" autoComplete="current-password" required /></Field>
-            <Field label="New password" name="password"><Input id="password" name="password" type="password" autoComplete="new-password" required minLength={12} /></Field>
+            <Field label="Current password" name="current"><PasswordInput id="current" name="current" autoComplete="current-password" required /></Field>
+            <Field label="New password" name="password"><PasswordInput id="password" name="password" autoComplete="new-password" required minLength={12} /></Field>
             <PasswordHint />
-            <Field label="Confirm new password" name="confirm"><Input id="confirm" name="confirm" type="password" autoComplete="new-password" required /></Field>
+            <Field label="Confirm new password" name="confirm"><PasswordInput id="confirm" name="confirm" autoComplete="new-password" required /></Field>
           </ActionForm>
         </Card>
         <Card title="Active sessions" className="lg:col-span-2">
@@ -41,8 +45,8 @@ export default async function SecurityPage({ searchParams }: { searchParams: Pro
               <tr key={s.id}>
                 <Td className="max-w-xs truncate" title={s.userAgent ?? ""}>{s.userAgent?.slice(0, 60) ?? "Unknown"}</Td>
                 <Td>{s.ipAddress ?? "—"}</Td>
-                <Td>{fmtDateTime(s.createdAt)}</Td>
-                <Td>{fmtDateTime(s.lastSeenAt)}</Td>
+                <Td>{fmtDateTime(s.createdAt, false, ctx.tenant?.timeZone)}</Td>
+                <Td>{fmtDateTime(s.lastSeenAt, false, ctx.tenant?.timeZone)}</Td>
                 <Td className="text-right">
                   {s.id === ctx.session.sessionId ? <Badge tone="teal">This session</Badge> : (
                     <form action={revokeSessionAction}><input type="hidden" name="sessionId" value={s.id} /><button type="submit" className="text-sm font-semibold text-red-700 hover:underline">Sign out</button></form>

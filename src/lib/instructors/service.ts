@@ -8,7 +8,7 @@
 import { and, asc, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Tx } from "@/db/client";
-import { announcements, attendance, courseReviews, courses, facilities, instructorCourses, instructors, memberships, trainingSessions, users } from "@/db/schema";
+import { announcements, attendance, courseReviews, courses, facilities, instructorCourses, instructors, memberships, organizations, trainingSessions, users } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
 import { notify } from "@/lib/notify/notifications";
 import { can, type Access } from "@/lib/rbac/access";
@@ -182,12 +182,18 @@ async function sessionOr404(tx: Tx, id: string) {
   const [s] = await tx.select().from(trainingSessions).where(eq(trainingSessions.id, id));
   return s ?? null;
 }
-const fmtWhen = (d: Date) => d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" }) + " ET";
+/** Formats a class time in the organization's time zone, with the zone abbreviation. */
+async function whenFormatter(tx: Tx): Promise<(d: Date) => string> {
+  const [o] = await tx.select({ tz: organizations.timeZone }).from(organizations).limit(1);
+  const timeZone = o?.tz ?? "America/New_York";
+  return (d) => d.toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone, timeZoneName: "short" });
+}
 
 export async function registerAttendees(tx: Tx, ctx: Ctx, sessionId: string, userIds: string[]): Promise<ServiceResult<{ added: number; skipped: number }>> {
   const s = await sessionOr404(tx, sessionId);
   if (!s) return err("Class not found.");
   if (s.status !== "SCHEDULED") return err("Only scheduled classes accept registrations.");
+  const fmtWhen = await whenFormatter(tx);
   let added = 0;
   let skipped = 0;
   for (const u of [...new Set(userIds)]) {
@@ -251,6 +257,7 @@ export async function setSessionStatus(tx: Tx, ctx: Ctx, sessionId: string, stat
   const r = await tx.update(trainingSessions).set({ status, cancelledReason: status === "CANCELLED" ? reason!.trim() : null }).where(eq(trainingSessions.id, sessionId)).returning({ id: trainingSessions.id });
   if (!r.length) return err("You are not authorized to change this class.");
   if (status === "CANCELLED") {
+    const fmtWhen = await whenFormatter(tx);
     const roster = await tx.select({ userId: attendance.userId }).from(attendance).where(eq(attendance.sessionId, sessionId));
     await notify(tx, roster.map((a) => ({ tenantId: ctx.tenantId, userId: a.userId, type: "class.cancelled", title: `Class cancelled: ${s.title}`, body: `The class on ${fmtWhen(s.startsAt)} was cancelled. Reason: ${reason!.trim()}`, link: "/learning", dedupeKey: `class-cancel:${sessionId}:${a.userId}` })));
   }
