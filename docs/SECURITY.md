@@ -16,6 +16,7 @@
 | Audit | Append-only, hash-chained per tenant; verifier in Admin → Audit and `scripts/ops/verify-restore.ts` |
 | AI | Server-side key; PHI/clinical/authority guardrails before any model call; no write tools; no prompt/answer storage; rate limit |
 | Cron | `CRON_SECRET` bearer token; constant-time comparison |
+| Database functions | EXECUTE limited to `chta_app`/`chta_system` (no `PUBLIC`); `search_path` pinned on every function |
 
 ## Testing evidence (Phase 7)
 - Integration: `tests/integration/tenant-isolation.test.ts`, `production.test.ts` (RLS forced on all tenant tables; sweep of every readable table returns zero rows of another tenant; cross-tenant writes rejected).

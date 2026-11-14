@@ -120,6 +120,13 @@
       "when": 1794634531539,
       "tag": "0016_harden_function_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794634902120,
+      "tag": "0017_pin_function_search_path",
+      "breakpoints": true
     }
   ]
 }

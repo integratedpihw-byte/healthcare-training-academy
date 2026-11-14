@@ -23,7 +23,7 @@ Copy names from `.env.example` into the host's secret store (Vercel → Project 
 
 ## 4. Migrate and seed reference data
 ```bash
-MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0015
+MIGRATION_DATABASE_URL=… npx drizzle-kit migrate          # applies drizzle/0000–0017
 dotenv -e .env.production -- tsx scripts/seed.ts           # reference data + regulatory library + course library (IN_REVIEW)
 ```
 Do **not** pass `--demo` in production. Create the first platform administrator with `tsx scripts/ops/create-platform-admin.ts <email> <first> <last>` (emails a one-time setup link; no password is printed), then enroll MFA.
@@ -47,4 +47,13 @@ Vercel functions accept request bodies of about 4.5 MB. License documents and ev
 7. Run `scripts/ops/verify-restore.ts` against a restored copy of the production backup (see OPERATIONS.md).
 
 ## 7. Staging
-Use a separate database, bucket, Stripe test mode and `SMS_PROVIDER=console`. The demo seed (`--demo`) is appropriate for staging and sales demos only; all demo data is labeled DEMO.
+Use a separate database, bucket, Stripe test mode and `SMS_PROVIDER=console`. The demo seed (`--demo`) is appropriate for staging and sales demos only; all demo data is labeled DEMO. On Vercel, set `SEED_DEMO=1` and a private `SEED_DEMO_PASSWORD`; the release step seeds demo tenants once.
+
+### Supabase notes
+- Connect through Supavisor: transaction mode (port 6543) for `DATABASE_URL`/`SYSTEM_DATABASE_URL`, session mode (port 5432) for `MIGRATION_DATABASE_URL`; usernames take the form `chta_app.<project-ref>`. Append `?sslmode=require&uselibpqcompat=true`, or set `DATABASE_CA_CERT` to Supabase's CA for full verification.
+- After `setup-roles.sql`, run as `postgres`: `GRANT USAGE, CREATE ON SCHEMA public TO chta_owner; GRANT CREATE ON DATABASE postgres TO chta_owner;` (migrations create the `drizzle` schema).
+- The app does not use Supabase's Data API. Migration 0016 revokes function EXECUTE from `PUBLIC`/`anon`/`authenticated`, and no table privileges are granted to those roles; for defense in depth, disable the Data API (Project Settings → API) or remove `public` from its exposed schemas.
+- Free-plan projects pause when idle and have no point-in-time recovery; use Pro (PITR add-on) for production.
+
+### Writing new database functions
+Every function in `public` must declare `SET search_path = public, pg_temp` (migration 0017 pinned the existing ones; `CREATE OR REPLACE` drops a previously set value). Do not grant EXECUTE to `PUBLIC`; default privileges grant it to `chta_app` and `chta_system`.
