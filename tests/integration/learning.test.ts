@@ -10,6 +10,9 @@ import {
   createNewVersion,
   decide,
   getBuilderCourse,
+  moveLesson,
+  placeLesson,
+  placeModule,
   setObjectives,
   submitForReview,
   type AuthorScope,
@@ -316,5 +319,60 @@ describe("one open enrollment per course", () => {
     const [open] = await systemDb().select().from(enrollments).where(and(eq(enrollments.userId, learner2A.userId), sql`status <> 'COMPLETED'`));
     const err = await expectPgError(systemDb().insert(enrollments).values({ tenantId: A.tenantId, userId: learner2A.userId, courseId: open.courseId, courseVersionId: open.courseVersionId }));
     expect(err.code).toBe("23505");
+  });
+});
+
+describe("drag-and-drop ordering", () => {
+  it("places modules and lessons at any position, moves lessons between modules, and refuses other tenants and published versions", async () => {
+    const [cat] = await systemDb().select().from(courseCategories).where(eq(courseCategories.slug, "facility-programs"));
+    const c = await tenantScope(A, A.adminUserId, (s) => createCourse(s, { code: "ALPHA-DND-1", title: "Alpha Ordering", categoryId: cat.id, passingScore: 80, estimatedMinutes: 20, description: "Course used to verify drag-and-drop ordering.", targetAudience: "All staff" }));
+    if (!c.ok) throw new Error(c.error);
+    const b0 = (await tenantScope(A, A.adminUserId, (s) => getBuilderCourse(s, c.data.courseId)))!;
+    const mod = async (title: string) => { const r = await tenantScope(A, A.adminUserId, (s) => addModule(s, b0.working.id, { title })); if (!r.ok) throw new Error(r.error); return r.data.id; };
+    const les = async (m: string, title: string) => { const r = await tenantScope(A, A.adminUserId, (s) => addLesson(s, m, { title, type: "TEXT", body: "Body text for the lesson.", durationMinutes: 2 })); if (!r.ok) throw new Error(r.error); return r.data.id; };
+    const m1 = await mod("One"); const m2 = await mod("Two"); const m3 = await mod("Three");
+    const a = await les(m1, "La"); const b = await les(m1, "Lb"); const d = await les(m1, "Lc"); const x = await les(m2, "Lx");
+    const shape = async () => {
+      const cur = (await tenantScope(A, A.adminUserId, (s) => getBuilderCourse(s, c.data.courseId)))!;
+      return cur.modules.map((m) => `${m.title}[${m.lessons.map((l) => `${l.title}${l.sortOrder}`).join(",")}]`).join(" ");
+    };
+    const go = <T,>(fn: (s: AuthorScope) => Promise<T>) => tenantScope(A, A.adminUserId, fn);
+
+    expect((await go((s) => placeModule(s, m3, 0))).ok).toBe(true);
+    expect(await shape()).toBe("Three[] One[La1,Lb2,Lc3] Two[Lx1]");
+    expect((await go((s) => placeLesson(s, a, m1, 2))).ok).toBe(true); // reorder within a module
+    expect(await shape()).toBe("Three[] One[Lb1,Lc2,La3] Two[Lx1]");
+    expect((await go((s) => placeLesson(s, b, m2, 0))).ok).toBe(true); // move to another module; both renumbered
+    expect(await shape()).toBe("Three[] One[Lc1,La2] Two[Lb1,Lx2]");
+    expect((await go((s) => placeLesson(s, d, m3, 99))).ok).toBe(true); // into an empty module; index clamped
+    expect(await shape()).toBe("Three[Lc1] One[La1] Two[Lb1,Lx2]");
+
+    // The arrow buttons cross module boundaries, so they can do everything dragging can.
+    expect((await go((s) => moveLesson(s, d, "down"))).ok).toBe(true); // last in "Three" → first in "One"
+    expect(await shape()).toBe("Three[] One[Lc1,La2] Two[Lb1,Lx2]");
+    expect((await go((s) => moveLesson(s, d, "up"))).ok).toBe(true); // first in "One" → end of "Three"
+    expect((await go((s) => moveLesson(s, d, "up"))).ok).toBe(true); // already at the very top: no change
+    expect(await shape()).toBe("Three[Lc1] One[La1] Two[Lb1,Lx2]");
+
+    // Another tenant can neither move these lessons nor drop into these modules.
+    expect((await tenantScope(B, B.adminUserId, (s) => placeLesson(s, x, m1, 0))).ok).toBe(false);
+    expect((await tenantScope(B, B.adminUserId, (s) => placeModule(s, m1, 0))).ok).toBe(false);
+    // A learner without courses.author is refused.
+    expect((await tenantScope(A, learnerA.userId, (s) => placeLesson(s, x, m1, 0))).ok).toBe(false);
+    // A lesson cannot be dropped into a module of a different course.
+    const other = await tenantScope(A, A.adminUserId, (s) => createCourse(s, { code: "ALPHA-DND-2", title: "Alpha Ordering Two", categoryId: cat.id, passingScore: 80, estimatedMinutes: 20, description: "Second course for the cross-course check.", targetAudience: "All staff" }));
+    if (!other.ok) throw new Error(other.error);
+    const ob = (await tenantScope(A, A.adminUserId, (s) => getBuilderCourse(s, other.data.courseId)))!;
+    const om = await tenantScope(A, A.adminUserId, (s) => addModule(s, ob.working.id, { title: "Elsewhere" }));
+    if (!om.ok) throw new Error(om.error);
+    expect((await go((s) => placeLesson(s, x, om.data.id, 0))).ok).toBe(false);
+    expect(await shape()).toBe("Three[Lc1] One[La1] Two[Lb1,Lx2]");
+
+    // Once submitted for review the structure is locked.
+    await go((s) => setObjectives(s, b0.working.id, "Know the order\nKeep the order"));
+    const sub = await go((s) => submitForReview(s, c.data.courseId));
+    if (!sub.ok) throw new Error(sub.error);
+    expect((await go((s) => placeLesson(s, x, m1, 0))).ok).toBe(false);
+    expect((await go((s) => placeModule(s, m1, 0))).ok).toBe(false);
   });
 });

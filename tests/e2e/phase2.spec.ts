@@ -117,6 +117,26 @@ test("training director builds a course; organization admin approves and publish
   await expect(page.getByRole("heading", { name: "Code Yellow" })).toBeVisible();
   await shot(page, "p2-07-lesson-editor");
   await page.getByRole("link", { name: "← Back to course" }).click();
+
+  // Drag-and-drop ordering: a second module is dragged above the first, then the lesson is dragged into it.
+  await page.getByLabel("New module title").fill("2. Prevention");
+  await page.getByRole("button", { name: "Add module" }).click();
+  await expect(page.getByRole("img", { name: "Drag to move 2. Prevention" })).toBeVisible();
+  const moduleTitles = () => page.locator("ol > li > div:first-of-type > div.font-medium").allTextContents();
+  expect(await moduleTitles()).toEqual(["1. Risk and response", "2. Prevention"]);
+  await page.getByRole("img", { name: "Drag to move 2. Prevention" }).dragTo(page.getByText("1. Risk and response", { exact: true }), { targetPosition: { x: 5, y: 2 } });
+  await expect(page.getByRole("status").filter({ hasText: "Module moved to position 1." })).toBeAttached();
+  await expect.poll(moduleTitles).toEqual(["2. Prevention", "1. Risk and response"]);
+  await page.getByRole("img", { name: "Drag to move Missing resident procedure" }).dragTo(page.getByText("No lessons yet. Drag a lesson here, or add one below."));
+  await expect(page.locator("ol > li").first().getByRole("link", { name: "Missing resident procedure" })).toBeVisible();
+  await page.reload(); // the order is saved, not just shown
+  expect(await moduleTitles()).toEqual(["2. Prevention", "1. Risk and response"]);
+  await expect(page.locator("ol > li").first().getByRole("link", { name: "Missing resident procedure" })).toBeVisible();
+  await expect(page.locator("ol > li").nth(1).getByText("No lessons yet.")).toBeVisible();
+  if (process.env.DND_SHOT) await page.locator("ol").first().locator("xpath=ancestor::section[1]").screenshot({ path: process.env.DND_SHOT });
+  await page.locator("ol > li").nth(1).getByRole("button", { name: "Delete module and its lessons" }).click(); // a module without lessons cannot be submitted
+  await expect.poll(moduleTitles).toEqual(["2. Prevention"]);
+
   await page.getByRole("button", { name: "Submit for review" }).click();
   await expect(page.getByText("Submitted for review.")).toBeVisible();
   // Separation of duties: the author cannot approve their own course

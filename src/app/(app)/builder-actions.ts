@@ -16,6 +16,8 @@ import {
   deleteModule,
   moveLesson,
   moveModule,
+  placeLesson,
+  placeModule,
   setObjectives,
   submitForReview,
   updateCourse,
@@ -129,6 +131,18 @@ export async function structureAction(fd: FormData) {
   const path = `${BASE[kindOf(fd)]}/${id(fd, "courseId")}`;
   revalidatePath(path);
   if (!r.ok) redirect(`${path}?error=${encodeURIComponent(r.error)}`);
+}
+
+/** Drag-and-drop reordering from the structure editor. Returns an error message, or null on success. */
+export async function reorderAction(input: { scope: string; courseId: string; kind: "module" | "lesson"; id: string; toModuleId?: string; toIndex: number }): Promise<string | null> {
+  const uuid = /^[0-9a-f-]{36}$/i;
+  const toIndex = Number(input?.toIndex);
+  if (!input || !uuid.test(input.id) || !uuid.test(input.courseId) || !Number.isInteger(toIndex) || toIndex < 0 || toIndex > 1000) return "Invalid request.";
+  if (input.kind === "lesson" && !uuid.test(input.toModuleId ?? "")) return "Invalid request.";
+  const kind: Kind = input.scope === "platform" ? "platform" : "tenant";
+  const r = await withScope(kind, (s) => (input.kind === "module" ? placeModule(s, input.id, toIndex) : placeLesson(s, input.id, input.toModuleId!, toIndex)));
+  revalidatePath(`${BASE[kind]}/${input.courseId}`);
+  return r.ok ? null : r.error;
 }
 
 function lessonInput(fd: FormData) {

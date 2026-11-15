@@ -7,6 +7,7 @@ import { Alert, Badge, Card, EmptyState, Field, Input, Select, Table, Td, Textar
 import { ActionForm } from "@/components/action-form";
 import { LessonContent } from "@/components/learning/lesson-content";
 import { LessonMediaUpload } from "./lesson-media-upload";
+import { SortableEmpty, SortableItem, SortableStructure } from "./sortable";
 import {
   addLessonAction,
   addModuleAction,
@@ -130,6 +131,8 @@ export function CourseBuilder({ b, kind, base, categories, can, flash }: { b: B;
       <button type="submit" title={title} aria-label={title} className={confirm ? "rounded p-1 text-red-700 hover:bg-red-50" : "rounded p-1 text-slate-600 hover:bg-slate-100"}>{label}</button>
     </form>
   );
+  const sortable = draft && canAuthor;
+  const Sort = ({ children }: { children: React.ReactNode }) => (sortable ? <SortableStructure scope={kind} courseId={b.course.id}>{children}</SortableStructure> : <>{children}</>);
   const versionApprovals = b.approvals.filter((a) => a.courseVersionId === b.working.id);
   return (
     <div className="space-y-6">
@@ -165,10 +168,11 @@ export function CourseBuilder({ b, kind, base, categories, can, flash }: { b: B;
           </Card>
 
           <Card title={`Modules and lessons (${b.modules.length})`}>
+            <Sort>
             <ol className="space-y-5">
               {b.modules.map((m, mi) => (
-                <li key={m.id} className="rounded-lg border border-slate-200">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-navy-50/60 px-4 py-2">
+                <SortableItem key={m.id} kind="module" id={m.id} parentId={b.working.id} index={mi} label={m.title} className="rounded-lg border border-slate-200">
+                  <div className={`flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-navy-50/60 py-2 pr-4 ${sortable ? "pl-4 md:pl-8" : "pl-4"}`}>
                     <div className="font-medium text-navy-900">{m.title}</div>
                     {draft && canAuthor && (
                       <div className="flex items-center">
@@ -180,21 +184,21 @@ export function CourseBuilder({ b, kind, base, categories, can, flash }: { b: B;
                   </div>
                   <ul className="divide-y divide-slate-100">
                     {m.lessons.map((l, li) => (
-                      <li key={l.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm">
+                      <SortableItem key={l.id} kind="lesson" id={l.id} parentId={m.id} index={li} label={l.title} className={`flex flex-wrap items-center justify-between gap-2 py-2 pr-4 text-sm ${sortable ? "pl-4 md:pl-8" : "pl-4"}`}>
                         <Link href={`${base}/${b.course.id}/lessons/${l.id}`} className="text-slate-800 hover:text-teal-700 hover:underline">{l.title}</Link>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-500">{LESSON_TYPE_LABEL[l.type]} · {l.durationMinutes} min{l.isRequired ? "" : " · optional"}</span>
                           {draft && canAuthor && (
                             <>
-                              {li > 0 && struct("lesson-up", l.id, <ArrowUp className="h-4 w-4" />, "Move lesson up")}
-                              {li < m.lessons.length - 1 && struct("lesson-down", l.id, <ArrowDown className="h-4 w-4" />, "Move lesson down")}
+                              {(li > 0 || mi > 0) && struct("lesson-up", l.id, <ArrowUp className="h-4 w-4" />, li > 0 ? "Move lesson up" : "Move lesson to the previous module")}
+                              {(li < m.lessons.length - 1 || mi < b.modules.length - 1) && struct("lesson-down", l.id, <ArrowDown className="h-4 w-4" />, li < m.lessons.length - 1 ? "Move lesson down" : "Move lesson to the next module")}
                               {struct("lesson-delete", l.id, <Trash2 className="h-4 w-4" />, "Delete lesson", true)}
                             </>
                           )}
                         </div>
-                      </li>
+                      </SortableItem>
                     ))}
-                    {m.lessons.length === 0 && <li className="px-4 py-2 text-xs text-slate-500">No lessons yet.</li>}
+                    {m.lessons.length === 0 && (sortable ? <SortableEmpty moduleId={m.id}>No lessons yet. Drag a lesson here, or add one below.</SortableEmpty> : <li className="px-4 py-2 text-xs text-slate-500">No lessons yet.</li>)}
                   </ul>
                   {draft && canAuthor && (
                     <details className="border-t border-slate-100 px-4 py-3">
@@ -216,9 +220,10 @@ export function CourseBuilder({ b, kind, base, categories, can, flash }: { b: B;
                       </div>
                     </details>
                   )}
-                </li>
+                </SortableItem>
               ))}
             </ol>
+            </Sort>
             {draft && canAuthor && (
               <div className="mt-6 border-t border-slate-100 pt-5">
                 <ActionForm action={addModuleAction} submitLabel="Add module" variant="secondary" resetOnSuccess>

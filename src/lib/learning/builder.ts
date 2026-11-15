@@ -295,6 +295,38 @@ export async function moveModule(scope: AuthorScope, moduleId: string, dir: "up"
   return { ok: true, data: null };
 }
 
+/** Drag-and-drop: puts a module at a new position (0-based) within its draft version. */
+export async function placeModule(scope: AuthorScope, moduleId: string, toIndex: number): Promise<ServiceResult<null>> {
+  if (!scope.can("courses.author")) return err("You do not have permission to author courses.");
+  const m = await moduleInDraft(scope, moduleId);
+  if ("error" in m) return err(m.error!);
+  const siblings = await scope.db.select({ id: modules.id }).from(modules).where(eq(modules.courseVersionId, m.module.courseVersionId)).orderBy(asc(modules.sortOrder));
+  const order = siblings.map((s) => s.id).filter((id) => id !== moduleId);
+  order.splice(Math.max(0, Math.min(Math.trunc(toIndex), order.length)), 0, moduleId);
+  for (const [i, id] of order.entries()) await scope.db.update(modules).set({ sortOrder: i + 1 }).where(eq(modules.id, id));
+  return { ok: true, data: null };
+}
+
+/**
+ * Drag-and-drop: puts a lesson at a position (0-based) in a module of the same draft version.
+ * The target may be the lesson's own module (reorder) or another one (move).
+ */
+export async function placeLesson(scope: AuthorScope, lessonId: string, toModuleId: string, toIndex: number): Promise<ServiceResult<null>> {
+  if (!scope.can("courses.author")) return err("You do not have permission to author courses.");
+  const row = await getBuilderLesson(scope, lessonId);
+  if (!row) return err("Lesson not found.");
+  if (!(EDITABLE as readonly string[]).includes(row.version.status)) return err("Only draft versions can be edited.");
+  const target = await moduleInDraft(scope, toModuleId);
+  if ("error" in target) return err(target.error!);
+  if (target.module.courseVersionId !== row.version.id) return err("Lessons can only be moved within the same course version.");
+  const siblings = await scope.db.select({ id: lessons.id }).from(lessons).where(eq(lessons.moduleId, toModuleId)).orderBy(asc(lessons.sortOrder));
+  const order = siblings.map((s) => s.id).filter((id) => id !== lessonId);
+  order.splice(Math.max(0, Math.min(Math.trunc(toIndex), order.length)), 0, lessonId);
+  for (const [i, id] of order.entries()) await scope.db.update(lessons).set({ moduleId: toModuleId, sortOrder: i + 1 }).where(eq(lessons.id, id));
+  if (row.module.id !== toModuleId) await resequence(scope, "lessons", row.module.id);
+  return { ok: true, data: null };
+}
+
 async function swap<T extends { id: string; sortOrder: number }>(_scope: AuthorScope, list: T[], id: string, dir: "up" | "down", set: (id: string, s: number) => Promise<unknown>) {
   const i = list.findIndex((x) => x.id === id);
   const j = dir === "up" ? i - 1 : i + 1;
@@ -436,6 +468,15 @@ export async function moveLesson(scope: AuthorScope, lessonId: string, dir: "up"
   if (!row) return err("Lesson not found.");
   if (row.version.status !== "DRAFT") return err("Only draft versions can be edited.");
   const siblings = await scope.db.select().from(lessons).where(eq(lessons.moduleId, row.module.id)).orderBy(asc(lessons.sortOrder));
+  // At the edge of its module the lesson continues into the neighbouring module, so the
+  // buttons can do everything dragging can (keyboard and touch-screen parity).
+  const i = siblings.findIndex((l) => l.id === lessonId);
+  if ((dir === "up" && i === 0) || (dir === "down" && i === siblings.length - 1)) {
+    const mods = await scope.db.select({ id: modules.id }).from(modules).where(eq(modules.courseVersionId, row.version.id)).orderBy(asc(modules.sortOrder));
+    const neighbour = mods[mods.findIndex((m) => m.id === row.module.id) + (dir === "up" ? -1 : 1)];
+    if (!neighbour) return { ok: true, data: null };
+    return placeLesson(scope, lessonId, neighbour.id, dir === "up" ? Number.MAX_SAFE_INTEGER : 0);
+  }
   await swap(scope, siblings, lessonId, dir, (id, sortOrder) => scope.db.update(lessons).set({ sortOrder }).where(eq(lessons.id, id)));
   return { ok: true, data: null };
 }
