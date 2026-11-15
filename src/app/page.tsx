@@ -15,7 +15,7 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Logo size="lg" />
+        <Logo size="md" withName />
         <nav className="flex gap-2">
           <ButtonLink href="/login" variant="ghost">Sign in</ButtonLink>
           <ButtonLink href="/register" variant="teal">Register organization</ButtonLink>
@@ -32,7 +32,7 @@ export default async function Home() {
               <ButtonLink href="/register/individual" variant="secondary">I&apos;m an individual learner</ButtonLink>
             </div>
             </div>
-            <Image src={badgeImage} alt="CHITA — Complete Healthcare Innovative Training Academy badge" width={300} height={300} priority unoptimized className="mx-auto hidden h-auto w-72 drop-shadow-xl sm:block lg:w-80" />
+            <Image src={badgeImage} alt="" width={300} height={300} priority unoptimized className="mx-auto hidden h-auto w-72 drop-shadow-xl sm:block lg:w-80" />
           </div>
         </section>
         <section className="mx-auto max-w-6xl px-6 py-14">

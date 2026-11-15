@@ -7,7 +7,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen flex-col bg-sky-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <Link href="/"><Logo /></Link>
+          <Link href="/"><Logo withName /></Link>
           <Link href="/login" className="text-sm font-semibold text-teal-700 hover:underline">Sign in</Link>
         </div>
       </header>

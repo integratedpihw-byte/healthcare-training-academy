@@ -4,7 +4,7 @@
  */
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import QRCode from "qrcode";
-import { CERTIFICATE_LOGO_ASPECT, CERTIFICATE_LOGO_JPEG_BASE64, CERTIFICATE_SEAL_PNG_BASE64 } from "./logo-data";
+import { CERTIFICATE_SEAL_PNG_BASE64 } from "./logo-data";
 import { ACADEMY_NAME, CERTIFICATE_DISCLAIMER, effectiveStatus, verificationUrl, type EffectiveStatus } from "./service";
 
 const NAVY = rgb(11 / 255, 37 / 255, 69 / 255);
@@ -72,12 +72,10 @@ export async function renderCertificatePdf(c: CertificatePdfData): Promise<Uint8
   page.drawRectangle({ x: 18, y: 18, width: W - 36, height: H - 36, borderColor: NAVY, borderWidth: 3 });
   page.drawRectangle({ x: 28, y: 28, width: W - 56, height: H - 56, borderColor: TEAL, borderWidth: 1 });
 
-  // Academy logo, with the full registered name beneath it
-  const logo = await pdf.embedJpg(Buffer.from(CERTIFICATE_LOGO_JPEG_BASE64, "base64"));
-  const logoW = 216;
-  const logoH = logoW / CERTIFICATE_LOGO_ASPECT;
-  page.drawImage(logo, { x: (W - logoW) / 2, y: H - 38 - logoH, width: logoW, height: logoH });
-  centered(page, ACADEMY_NAME.toUpperCase(), H - 124, sansBold, 9, NAVY);
+  // Round CHITA badge, with the full registered name beneath it
+  const badge = await pdf.embedPng(Buffer.from(CERTIFICATE_SEAL_PNG_BASE64, "base64"));
+  page.drawImage(badge, { x: (W - 78) / 2, y: H - 36 - 78, width: 78, height: 78 });
+  centered(page, ACADEMY_NAME.toUpperCase(), H - 126, sansBold, 9, NAVY);
 
   const title = c.kind === "CONTINUING_EDUCATION" ? "Certificate of Continuing Education" : "Certificate of Course Completion";
   centered(page, title, H - 160, serif, 34, NAVY);
@@ -99,10 +97,6 @@ export async function renderCertificatePdf(c: CertificatePdfData): Promise<Uint8
   detail("Completion date", fmt(c.completedOn));
   detail("Certificate number", c.certificateNumber);
   detail(c.expiresOn ? "Valid through" : "Expiration", c.expiresOn ? fmt(c.expiresOn) : "No expiration set for this course");
-
-  // CHITA badge as the certificate seal, above the issuing authority
-  const seal = await pdf.embedPng(Buffer.from(CERTIFICATE_SEAL_PNG_BASE64, "base64"));
-  page.drawImage(seal, { x: 300 + 115 - 36, y: 176, width: 72, height: 72 });
 
   // Issuing authority (center-right)
   const ix = 300;

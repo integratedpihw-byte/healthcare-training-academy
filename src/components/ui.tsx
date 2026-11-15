@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import logoImage from "@/assets/brand/logo.webp";
-import emblemImage from "@/assets/brand/emblem.webp";
+import badgeImage from "@/assets/brand/badge.webp";
 import { clsx } from "clsx";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -162,23 +161,26 @@ export function DemoBanner({ show }: { show: boolean }) {
   );
 }
 
-const LOGO_WIDTH = { sm: 120, md: 156, lg: 204, xl: 300 } as const;
+const LOGO_SIZE = { sm: 40, md: 52, lg: 76, xl: 132 } as const;
 
-/**
- * The academy logo (green and gold artwork with a transparent background).
- * `light` means "on a dark surface": the logo is set on a white plate so it stays legible.
- * `variant="mark"` shows the round CHITA badge, for tight spaces such as the phone header.
- */
 export const PRODUCT_NAME = "Complete Healthcare Innovative Training Academy";
 
-export function Logo({ light = false, size = "md", variant = "full" }: { light?: boolean; size?: keyof typeof LOGO_WIDTH; variant?: "full" | "mark" }) {
-  const img =
-    variant === "mark" ? (
-      <Image src={emblemImage} alt="CHITA" width={40} height={40} unoptimized priority className="rounded-full" />
-    ) : (
-      <Image src={logoImage} alt={PRODUCT_NAME} width={LOGO_WIDTH[size]} height={Math.round((LOGO_WIDTH[size] * logoImage.height) / logoImage.width)} unoptimized priority />
-    );
-  return <span className={cn("inline-flex items-center", light && "bg-white shadow-sm", light && (variant === "mark" ? "rounded-full p-0.5" : "rounded-lg px-3 py-2"))}>{img}</span>;
+/**
+ * The academy logo: the round CHITA badge. `withName` adds the full name beside it;
+ * `light` renders that name in white for dark surfaces.
+ */
+export function Logo({ light = false, size = "md", withName = false }: { light?: boolean; size?: keyof typeof LOGO_SIZE; withName?: boolean }) {
+  const px = LOGO_SIZE[size];
+  return (
+    <span className="inline-flex items-center gap-3">
+      <Image src={badgeImage} alt={withName ? "" : PRODUCT_NAME} width={px} height={px} unoptimized priority className="shrink-0 rounded-full" />
+      {withName && (
+        <span className={cn("font-semibold leading-tight", size === "sm" ? "text-xs" : "text-sm", light ? "text-white" : "text-navy-900")}>
+          Complete Healthcare<br />Innovative Training Academy
+        </span>
+      )}
+    </span>
+  );
 }
 
 export const FACILITY_TYPE_LABELS: Record<string, string> = {

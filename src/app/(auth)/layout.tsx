@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </aside>
       <main id="main" className="flex items-center justify-center bg-sky-50 px-4 py-10">
         <div className="w-full max-w-lg">
-          <Link href="/" className="mb-6 inline-block lg:hidden"><Logo size="lg" /></Link>
+          <Link href="/" className="mb-6 inline-block lg:hidden"><Logo size="md" withName /></Link>
           {children}
           <SiteFooter className="mt-6" />
         </div>

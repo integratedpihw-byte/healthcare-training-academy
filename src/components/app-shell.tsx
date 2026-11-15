@@ -49,7 +49,7 @@ export function AppShell({
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-navy-900 text-navy-100 md:flex">
           <div className="px-5 py-5">
-            <Link href="/dashboard"><Logo light size="lg" /><span className="sr-only"> — go to dashboard</span></Link>
+            <Link href="/dashboard"><Logo light size="lg" withName /><span className="sr-only"> — go to dashboard</span></Link>
           </div>
           {tenantName && (
             <div className="mx-4 mb-3 rounded-lg bg-navy-800 px-3 py-2">
@@ -101,7 +101,7 @@ export function AppShell({
         <div className="min-w-0 flex-1">
           {/* Mobile top bar */}
           <header className="flex items-center justify-between bg-navy-900 px-4 py-3 md:hidden">
-            <Link href="/dashboard" className="flex items-center gap-2.5"><Logo light variant="mark" /><span className="text-xs font-semibold leading-tight text-white">Complete Healthcare<br />Innovative Training Academy</span></Link>
+            <Link href="/dashboard"><Logo light size="sm" withName /></Link>
             <form action={logoutAction}><button className="min-h-9 rounded px-3 text-sm font-medium text-white" type="submit">Sign out</button></form>
           </header>
           <MobileNav items={[...nav.map((n) => ({ key: n.key, href: n.href, label: n.label, badge: n.key === "notifications" ? unread : undefined })), ...(isPlatformAdmin ? [{ key: "platform", href: "/platform", label: "Platform Console" }] : []), { key: "help", href: "/help", label: "Help" }]} />

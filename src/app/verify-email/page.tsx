@@ -12,7 +12,7 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
   return (
     <main id="main" className="flex min-h-screen items-center justify-center bg-sky-50 px-4">
       <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <Logo />
+        <Logo withName />
         <h1 className="mt-6 text-xl font-bold text-navy-900">{ok ? "Email confirmed" : "This link did not work"}</h1>
         <div className="mt-3">
           {ok
