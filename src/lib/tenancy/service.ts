@@ -162,7 +162,7 @@ export async function registerOrganization(
   });
   // Tell the platform administrators that a registration is waiting for them.
   const admins = await db.select({ email: users.email }).from(users).where(and(eq(users.isPlatformAdmin, true), eq(users.status, "ACTIVE")));
-  await mailAll(admins.map((a) => a.email), `New organization awaiting review: ${input.organizationName}`, `${input.organizationName} registered and is waiting for approval.\n\nReview it in the Platform Console:\n${appUrl()}/platform/tenants`);
+  await mailAll(admins.map((a) => a.email), `New organization awaiting review: ${input.organizationName}`, `${input.organizationName} registered and is waiting for approval.\n\nReview and approve it in the Platform Console:\n${appUrl()}/platform/tenants/${result.tenantId}`);
   return { ok: true, data: result };
 }
 

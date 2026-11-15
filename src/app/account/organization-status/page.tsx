@@ -15,6 +15,11 @@ export default async function OrgStatus({ searchParams }: { searchParams: Promis
     <Card>
       <h1 className="text-xl font-bold text-navy-900">{t.name}</h1>
       <div className="mt-4 space-y-4 text-sm text-slate-700">
+        {ctx.user.isPlatformAdmin && (
+          <Alert tone="green">
+            You are a platform administrator. <Link href="/platform?status=PENDING_APPROVAL" className="font-semibold underline">Open the Platform Console</Link> to review and approve organizations, including this one.
+          </Alert>
+        )}
         {registered && <Alert tone="green">Registration received. Your workspace has been created.</Alert>}
         {t.status === "PENDING_APPROVAL" && (
           <>
