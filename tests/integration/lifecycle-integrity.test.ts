@@ -14,6 +14,7 @@ import {
   memberships,
   subscriptions,
   tenants,
+  users,
 } from "@/db/schema";
 import { decideTenant, registerOrganization, revokeMemberRole, saveFacility, systemRoleId } from "@/lib/tenancy/service";
 import { deleteCustomRole, saveCustomRole } from "@/lib/rbac/service";
@@ -81,6 +82,39 @@ describe("organization registration and approval", () => {
     expect((await decideTenant(systemDb(), { userId: pa.id, isPlatformAdmin: true }, p.tenantId, "approve")).ok).toBe(false);
     expect((await decideTenant(systemDb(), { userId: pa.id, isPlatformAdmin: true }, p.tenantId, "suspend", "Unpaid")).ok).toBe(true);
     expect((await decideTenant(systemDb(), { userId: pa.id, isPlatformAdmin: true }, p.tenantId, "reactivate")).ok).toBe(true);
+  });
+
+  it("emails platform administrators about a new registration, and the organization's administrator about each decision", async () => {
+    const pa = await platformAdmin();
+    const [paUser] = await systemDb().select({ email: users.email }).from(users).where(eq(users.id, pa.id));
+    const adminEmail = `owner-${Date.now()}@clinic.example`;
+    let from = consoleOutbox.length;
+    const reg = await registerOrganization(systemDb(), {
+      organizationName: "Harbor Family Clinic", facilityName: "Harbor Main", facilityType: "CLINIC", adminFirstName: "Dana", adminLastName: "Whitfield",
+      adminEmail, password: "Quiet-Harbor#2026", state: "FL", plan: "STARTER", acceptTerms: true,
+    });
+    if (!reg.ok) throw new Error(reg.error);
+    const notice = consoleOutbox.slice(from).find((m) => m.to === paUser.email && m.subject.includes("New organization awaiting review: Harbor Family Clinic"));
+    expect(notice?.text).toContain("/platform/tenants");
+    expect(consoleOutbox.slice(from).some((m) => m.to === adminEmail && m.subject.includes("awaiting review"))).toBe(false);
+
+    const actor = { userId: pa.id, isPlatformAdmin: true };
+    from = consoleOutbox.length;
+    expect((await decideTenant(systemDb(), actor, reg.data.tenantId, "approve")).ok).toBe(true);
+    const approved = consoleOutbox.slice(from).filter((m) => m.subject.includes("Harbor Family Clinic has been approved"));
+    expect(approved.map((m) => m.to)).toEqual([adminEmail]); // only this organization's administrator
+    expect(approved[0].text).toContain("/login");
+
+    from = consoleOutbox.length;
+    expect((await decideTenant(systemDb(), actor, reg.data.tenantId, "suspend", "Payment overdue")).ok).toBe(true);
+    const suspended = consoleOutbox.slice(from).find((m) => m.to === adminEmail);
+    expect(suspended?.subject).toContain("has been suspended");
+    expect(suspended?.text).toContain("Reason: Payment overdue");
+
+    // A refused decision sends nothing.
+    from = consoleOutbox.length;
+    expect((await decideTenant(systemDb(), actor, reg.data.tenantId, "approve")).ok).toBe(false);
+    expect(consoleOutbox.length).toBe(from);
   });
 });
 

@@ -18,7 +18,7 @@ export default async function OrgStatus({ searchParams }: { searchParams: Promis
         {registered && <Alert tone="green">Registration received. Your workspace has been created.</Alert>}
         {t.status === "PENDING_APPROVAL" && (
           <>
-            <Alert tone="blue">Your organization is awaiting review by a platform administrator. You will receive an email when it is approved.</Alert>
+            <Alert tone="blue">Your organization is awaiting review by a platform administrator. We will email <strong>{ctx.user.email}</strong> when a decision is made.</Alert>
             <p>While you wait, you can <Link href="/settings/security" className="font-semibold text-teal-700 underline">turn on two-step verification</Link> for your administrator account.</p>
           </>
         )}

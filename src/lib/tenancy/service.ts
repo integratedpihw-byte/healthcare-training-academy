@@ -24,6 +24,7 @@ import { normalizeEmail, secureUnverifiedAccount, sendPasswordLink } from "@/lib
 import { BREACHED_MESSAGE, isBreachedPassword } from "@/lib/auth/password";
 import { TIME_ZONES } from "@/lib/time";
 import { randomToken } from "@/lib/auth/crypto";
+import { sendEmail } from "@/lib/notify/email";
 import type { SystemRoleKey } from "@/lib/rbac/catalog";
 
 export const TRIAL_DAYS = 14;
@@ -159,7 +160,34 @@ export async function registerOrganization(
     });
     return { tenantId: tenant.id, userId: user.id };
   });
+  // Tell the platform administrators that a registration is waiting for them.
+  const admins = await db.select({ email: users.email }).from(users).where(and(eq(users.isPlatformAdmin, true), eq(users.status, "ACTIVE")));
+  await mailAll(admins.map((a) => a.email), `New organization awaiting review: ${input.organizationName}`, `${input.organizationName} registered and is waiting for approval.\n\nReview it in the Platform Console:\n${appUrl()}/platform/tenants`);
   return { ok: true, data: result };
+}
+
+const appUrl = () => process.env.APP_URL ?? "http://localhost:3000";
+/** Best-effort email to several recipients; a delivery failure never undoes the decision that triggered it. */
+async function mailAll(to: string[], subject: string, text: string) {
+  for (const address of to) {
+    try {
+      await sendEmail({ to: address, subject: `[Complete Healthcare Innovative Training Academy] ${subject}`, text });
+    } catch (e) {
+      console.error("email delivery failed", e instanceof Error ? e.message : e);
+    }
+  }
+}
+
+/** Active organization administrators of a tenant: the people told about approval decisions. */
+export async function organizationAdminEmails(db: Db, tenantId: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ email: users.email })
+    .from(memberships)
+    .innerJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
+    .innerJoin(roles, eq(roles.id, membershipRoles.roleId))
+    .innerJoin(users, eq(users.id, memberships.userId))
+    .where(and(eq(memberships.tenantId, tenantId), eq(memberships.status, "ACTIVE"), eq(roles.key, "org_admin"), eq(users.status, "ACTIVE")));
+  return rows.map((r) => r.email);
 }
 
 export const registerIndividualSchema = z.object({
@@ -247,6 +275,15 @@ export async function decideTenant(
       after: { status: tr.to, reason: reason ?? null },
     });
   });
+  // The organization's administrators are told the outcome by email.
+  const why = reason?.trim() ? `\n\nReason: ${reason.trim()}` : "";
+  const message: Record<typeof decision, [string, string]> = {
+    approve: [`${t.name} has been approved`, `Your organization, ${t.name}, has been approved. You can now sign in and set up your facilities, staff and training:\n${appUrl()}/login`],
+    reject: [`${t.name} was not approved`, `Your registration for ${t.name} was not approved.${why}\n\nIf you believe this is a mistake, reply to this email or see ${appUrl()}/help`],
+    suspend: [`${t.name} has been suspended`, `Access to ${t.name} has been suspended.${why}\n\nContact support to restore access: ${appUrl()}/help`],
+    reactivate: [`${t.name} has been reactivated`, `Access to ${t.name} has been restored. You can sign in again:\n${appUrl()}/login`],
+  };
+  await mailAll(await organizationAdminEmails(db, tenantId), ...message[decision]);
   return { ok: true, data: { status: tr.to } };
 }
 
