@@ -33,6 +33,12 @@ import { dementiaCare } from "./courses/home-health/dementia-care";
 import { medicationAssistance } from "./courses/home-health/medication-assistance";
 import { homeInfectionControl } from "./courses/home-health/infection-control-safety";
 import { specializedHomeHealth } from "./courses/home-health/specialized-home-health";
+import { mhFundamentals } from "./courses/mental-health/mh-fundamentals";
+import { crisisAwareness } from "./courses/mental-health/crisis-awareness";
+import { mhSupportWorker } from "./courses/mental-health/support-worker";
+import { substanceUse } from "./courses/mental-health/substance-use";
+import { traumaInformedCare } from "./courses/mental-health/trauma-informed-care";
+import { suicidePrevention } from "./courses/mental-health/suicide-prevention";
 
 /**
  * Library: the 15 priority launch courses of spec §24, followed by the public health
@@ -77,5 +83,12 @@ export const LIBRARY: CourseContent[] = [
   medicationAssistance,
   homeInfectionControl,
   specializedHomeHealth,
+  // Mental Health division
+  mhFundamentals,
+  crisisAwareness,
+  mhSupportWorker,
+  substanceUse,
+  traumaInformedCare,
+  suicidePrevention,
 ];
 export * from "./types";
