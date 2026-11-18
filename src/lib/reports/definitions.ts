@@ -9,10 +9,15 @@ import { z } from "zod";
 import type { Tx } from "@/db/client";
 import { evaluateCompliance, facilityScope } from "@/lib/compliance/service";
 import { CATEGORY_LABELS, ITEM_LABEL, RULE_STATE_LABEL } from "@/lib/compliance/engine";
-import type { Access } from "@/lib/rbac/access";
+import { can, type Access } from "@/lib/rbac/access";
+import type { PermissionKey } from "@/lib/rbac/catalog";
 import { complianceFor, expirationsReport } from "@/lib/workforce/compliance";
 import { COMPLIANCE_LABEL, addDays, todayIso } from "@/lib/workforce/rules";
 import type { ReportResult } from "./export";
+import { compensation } from "@/lib/instructors/compensation";
+import { CERT_KIND } from "@/lib/certificates/labels";
+
+const money = (cents: number | null) => (cents == null ? "—" : (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" }));
 
 export interface ReportCtx {
   tenantId: string;
@@ -36,9 +41,11 @@ export interface ReportDef {
   number: number;
   title: string;
   description: string;
-  group: "Compliance" | "Training" | "Workforce";
+  group: "Compliance" | "Training" | "Workforce" | "Business";
   params: ParamKey[];
   required?: ParamKey[];
+  /** Extra permissions, any one of which is needed (in addition to reports.view). */
+  anyOf?: PermissionKey[];
   run: (tx: Tx, ctx: ReportCtx, p: ReportParams) => Promise<ReportResult>;
 }
 
@@ -636,7 +643,280 @@ export const REPORTS: ReportDef[] = [
       };
     },
   },
+  {
+    key: "enrollment",
+    number: 16,
+    title: "Student enrollment",
+    description: "Enrollments started in a period, by course, with current status and completion rate.",
+    group: "Training",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ course: string; code: string; enrolled: number; in_progress: number; completed: number; failed: number; withdrawn: number }>(sql`
+          select c.title course, c.code, count(*)::int enrolled,
+                 count(*) filter (where e.status in ('NOT_STARTED','IN_PROGRESS','AWAITING_ASSESSMENT'))::int in_progress,
+                 count(*) filter (where e.status = 'COMPLETED')::int completed,
+                 count(*) filter (where e.status = 'FAILED')::int failed,
+                 count(*) filter (where e.status = 'WITHDRAWN')::int withdrawn
+            from enrollments e join courses c on c.id = e.course_id
+           where e.created_at >= ${from}::date and e.created_at < (${to}::date + 1)
+           group by c.title, c.code order by enrolled desc, c.title`)
+      ).rows;
+      const total = rows.reduce((s, r) => s + r.enrolled, 0);
+      return {
+        title: "Student enrollment",
+        subtitle: `${from} to ${to} · ${total} enrollments`,
+        columns: [
+          { key: "course", label: "Course", width: 3 },
+          { key: "code", label: "Code" },
+          { key: "enrolled", label: "Enrolled", width: 0.7 },
+          { key: "in_progress", label: "In progress", width: 0.8 },
+          { key: "completed", label: "Completed", width: 0.8 },
+          { key: "failed", label: "Not passed", width: 0.7 },
+          { key: "withdrawn", label: "Withdrawn", width: 0.7 },
+          { key: "rate", label: "Completion %", width: 0.8 },
+        ],
+        rows: rows.map((r) => ({ ...r, rate: r.enrolled ? Math.round((r.completed / r.enrolled) * 100) : 0 })),
+      };
+    },
+  },
+  {
+    key: "certificates-issued",
+    number: 17,
+    title: "Certificates issued",
+    description: "Every certificate issued in a period, by type, with its current status.",
+    group: "Training",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ issued: string; recipient: string; kind: string; course: string; number: string; hours: string; status: string; expires: string | null }>(sql`
+          select issued_at::date::text issued, recipient_name recipient, kind::text kind, course_title course, certificate_number number, training_hours::text hours,
+                 case when status = 'ACTIVE' and expires_on < current_date then 'EXPIRED' else status::text end status, expires_on::text expires
+            from certificates where issued_at >= ${from}::date and issued_at < (${to}::date + 1) order by issued_at desc`)
+      ).rows;
+      return {
+        title: "Certificates issued",
+        subtitle: `${from} to ${to} · ${rows.length} certificates`,
+        columns: [
+          { key: "issued", label: "Issued" },
+          { key: "recipient", label: "Recipient", width: 1.5 },
+          { key: "kind", label: "Type", width: 1.2 },
+          { key: "course", label: "Course or skill", width: 2.5 },
+          { key: "number", label: "Certificate no.", width: 1.4 },
+          { key: "hours", label: "Hours", width: 0.6 },
+          { key: "status", label: "Status" },
+          { key: "expires", label: "Expires" },
+        ],
+        rows: rows.map((r) => ({ ...r, kind: CERT_KIND[r.kind] ?? r.kind, expires: r.expires ?? "—" })),
+      };
+    },
+  },
+  {
+    key: "student-retention",
+    number: 18,
+    title: "Student retention",
+    description: "Whether learners who start a course finish it: active, inactive for 30+ days, completed and withdrawn.",
+    group: "Training",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ course: string; started: number; completed: number; active: number; stalled: number; withdrawn: number }>(sql`
+          select c.title course, count(*)::int started,
+                 count(*) filter (where e.status = 'COMPLETED')::int completed,
+                 count(*) filter (where e.status in ('IN_PROGRESS','AWAITING_ASSESSMENT') and e.updated_at >= now() - interval '30 days')::int active,
+                 count(*) filter (where e.status in ('NOT_STARTED','IN_PROGRESS','AWAITING_ASSESSMENT') and e.updated_at < now() - interval '30 days')::int stalled,
+                 count(*) filter (where e.status in ('WITHDRAWN','FAILED'))::int withdrawn
+            from enrollments e join courses c on c.id = e.course_id
+           where e.created_at >= ${from}::date and e.created_at < (${to}::date + 1)
+           group by c.title order by started desc`)
+      ).rows;
+      return {
+        title: "Student retention",
+        subtitle: `Enrollments started ${from} to ${to}`,
+        columns: [
+          { key: "course", label: "Course", width: 3 },
+          { key: "started", label: "Started", width: 0.7 },
+          { key: "completed", label: "Completed", width: 0.8 },
+          { key: "active", label: "Active (30 days)", width: 0.9 },
+          { key: "stalled", label: "Inactive 30+ days", width: 0.9 },
+          { key: "withdrawn", label: "Withdrawn / not passed", width: 1 },
+          { key: "retention", label: "Retention %", width: 0.8 },
+        ],
+        rows: rows.map((r) => ({ ...r, retention: r.started ? Math.round(((r.completed + r.active) / r.started) * 100) : 0 })),
+        notes: ["Retention % = (completed + active in the last 30 days) ÷ started."],
+      };
+    },
+  },
+  {
+    key: "course-effectiveness",
+    number: 19,
+    title: "Course effectiveness",
+    description: "Completion, first-attempt exam pass rate, average score and learner ratings per course.",
+    group: "Training",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ course: string; code: string; completions: number; attempts: number; first_pass: number; first_total: number; avg_score: number | null; rating: number | null; ratings: number }>(sql`
+          select c.title course, c.code,
+                 (select count(*)::int from enrollments e where e.course_id = c.id and e.status = 'COMPLETED' and e.completed_at >= ${from}::date and e.completed_at < (${to}::date + 1)) completions,
+                 count(a.id)::int attempts,
+                 count(a.id) filter (where a.attempt_number = 1 and a.passed)::int first_pass,
+                 count(a.id) filter (where a.attempt_number = 1)::int first_total,
+                 round(avg(a.score_pct))::int avg_score,
+                 (select round(avg(r.rating)::numeric, 1)::float from course_reviews r where r.course_id = c.id) rating,
+                 (select count(*)::int from course_reviews r where r.course_id = c.id) ratings
+            from courses c
+            join enrollments en on en.course_id = c.id
+            left join examination_attempts a on a.enrollment_id = en.id and a.submitted_at >= ${from}::date and a.submitted_at < (${to}::date + 1)
+           group by c.id, c.title, c.code
+          having count(a.id) > 0 or (select count(*) from enrollments e where e.course_id = c.id and e.status = 'COMPLETED') > 0
+           order by c.title`)
+      ).rows;
+      return {
+        title: "Course effectiveness",
+        subtitle: `${from} to ${to}`,
+        columns: [
+          { key: "course", label: "Course", width: 3 },
+          { key: "code", label: "Code" },
+          { key: "completions", label: "Completions", width: 0.8 },
+          { key: "attempts", label: "Exam attempts", width: 0.8 },
+          { key: "first", label: "First-attempt pass %", width: 1 },
+          { key: "avg_score", label: "Average score %", width: 0.9 },
+          { key: "rating", label: "Learner rating (n)", width: 1 },
+        ],
+        rows: rows.map((r) => ({ course: r.course, code: r.code, completions: r.completions, attempts: r.attempts, first: r.first_total ? Math.round((r.first_pass / r.first_total) * 100) : "—", avg_score: r.avg_score ?? "—", rating: r.rating != null ? `${r.rating} (${r.ratings})` : "—" })),
+      };
+    },
+  },
+  {
+    key: "training-purchases",
+    anyOf: ["billing.view"],
+    number: 20,
+    title: "Training purchases",
+    description: "Course and package orders placed by your organization, with payment and refund status.",
+    group: "Business",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ date: string; item: string; quantity: number; subtotal: number; discount: number; total: number; refunded: number; status: string; method: string; promo: string | null }>(sql`
+          select created_at::date::text date, item_name item, quantity, subtotal_cents subtotal, discount_cents discount, total_cents total, refunded_cents refunded, status, payment_method method, promo_code promo
+            from course_orders where created_at >= ${from}::date and created_at < (${to}::date + 1) order by created_at desc`)
+      ).rows;
+      return {
+        title: "Training purchases",
+        subtitle: `${from} to ${to} · ${rows.length} orders`,
+        columns: [
+          { key: "date", label: "Date" },
+          { key: "item", label: "Item", width: 3 },
+          { key: "quantity", label: "Seats", width: 0.6 },
+          { key: "subtotal", label: "Subtotal", width: 0.8 },
+          { key: "discount", label: "Discount", width: 0.8 },
+          { key: "total", label: "Total", width: 0.8 },
+          { key: "refunded", label: "Refunded", width: 0.8 },
+          { key: "status", label: "Status" },
+          { key: "method", label: "Payment" },
+          { key: "promo", label: "Promo code" },
+        ],
+        rows: rows.map((r) => ({ ...r, subtotal: money(r.subtotal), discount: money(r.discount), total: money(r.total), refunded: money(r.refunded), promo: r.promo ?? "—" })),
+      };
+    },
+  },
+  {
+    key: "revenue-by-course",
+    anyOf: ["billing.view"],
+    number: 21,
+    title: "Training spend by course",
+    description: "Net amount paid per course or package (after refunds), seats bought and seats used.",
+    group: "Business",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = (
+        await tx.execute<{ item: string; orders: number; seats: number; net: number }>(sql`
+          select item_name item, count(*)::int orders, sum(quantity)::int seats, sum(total_cents - refunded_cents)::int net
+            from course_orders where status in ('PAID','PARTIALLY_REFUNDED','REFUNDED') and paid_at >= ${from}::date and paid_at < (${to}::date + 1)
+           group by item_name order by net desc`)
+      ).rows;
+      return {
+        title: "Training spend by course",
+        subtitle: `${from} to ${to} · ${money(rows.reduce((s, r) => s + r.net, 0))} net`,
+        columns: [
+          { key: "item", label: "Course or package", width: 3 },
+          { key: "orders", label: "Orders", width: 0.7 },
+          { key: "seats", label: "Seats bought", width: 0.8 },
+          { key: "net", label: "Net paid", width: 0.9 },
+        ],
+        rows: rows.map((r) => ({ ...r, net: money(r.net) })),
+      };
+    },
+  },
+  {
+    key: "employer-sponsored",
+    anyOf: ["billing.view"],
+    number: 22,
+    title: "Employer-sponsored seats",
+    description: "Seats your organization has paid for, by course: purchased, used and remaining.",
+    group: "Business",
+    params: [],
+    run: async (tx) => {
+      const rows = (
+        await tx.execute<{ course: string; code: string; total: number; used: number; expires: string | null; revoked: boolean }>(sql`
+          select c.title course, c.code, sum(e.seats_total)::int total,
+                 sum((select count(*) from entitlement_uses u where u.entitlement_id = e.id))::int used,
+                 min(e.expires_at)::date::text expires, bool_and(e.revoked_at is not null) revoked
+            from course_entitlements e join courses c on c.id = e.course_id group by c.title, c.code order by c.title`)
+      ).rows;
+      return {
+        title: "Employer-sponsored seats",
+        columns: [
+          { key: "course", label: "Course", width: 3 },
+          { key: "code", label: "Code" },
+          { key: "total", label: "Purchased", width: 0.8 },
+          { key: "used", label: "Used", width: 0.7 },
+          { key: "left", label: "Remaining", width: 0.8 },
+          { key: "expires", label: "Earliest expiry" },
+        ],
+        rows: rows.map((r) => ({ course: r.course, code: r.code, total: r.total, used: r.used, left: r.revoked ? 0 : r.total - r.used, expires: r.expires ?? "No expiry" })),
+      };
+    },
+  },
+  {
+    key: "instructor-compensation",
+    anyOf: ["billing.view", "instructors.manage"],
+    number: 23,
+    title: "Instructor compensation",
+    description: "Calculated amounts owed to instructors for completed classes, using the rate in effect on each class date.",
+    group: "Business",
+    params: ["from", "to"],
+    run: async (tx, _ctx, p) => {
+      const { from, to } = range(p);
+      const rows = await compensation(tx, from, to);
+      return {
+        title: "Instructor compensation",
+        subtitle: `Completed classes ${from} to ${to}`,
+        columns: [
+          { key: "instructor", label: "Instructor", width: 2 },
+          { key: "sessions", label: "Classes", width: 0.7 },
+          { key: "hours", label: "Hours taught", width: 0.8 },
+          { key: "learners", label: "Learners present", width: 0.9 },
+          { key: "basis", label: "Rate basis", width: 1.6 },
+          { key: "amount", label: "Amount", width: 0.9 },
+        ],
+        rows: rows.map((r) => ({ instructor: r.instructor, sessions: r.sessions, hours: r.hours, learners: r.learners, basis: r.basis, amount: money(r.amountCents) })),
+        notes: ["Rates are visible only to people who manage instructors or view billing. Amounts are calculated, not paid, by the academy."],
+      };
+    },
+  },
 ];
+
+export function reportAllowed(def: ReportDef, access: Access | null) {
+  return !def.anyOf || def.anyOf.some((perm) => can(access, perm));
+}
 
 export function getReport(key: string) {
   return REPORTS.find((r) => r.key === key) ?? null;

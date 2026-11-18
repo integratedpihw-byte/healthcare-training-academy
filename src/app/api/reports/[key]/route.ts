@@ -3,7 +3,7 @@ import { withTenant } from "@/db/server";
 import { getAuthContext } from "@/lib/auth/context";
 import { writeAudit } from "@/lib/audit";
 import { can } from "@/lib/rbac/access";
-import { getReport, paramsSchema } from "@/lib/reports/definitions";
+import { getReport, paramsSchema, reportAllowed } from "@/lib/reports/definitions";
 import { toCsv, toPdf, toXlsx } from "@/lib/reports/export";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   const tenantId = s.tenant.id;
   const userId = s.user.id;
   const result = await withTenant({ tenantId, userId }, async (tx) => {
-    if (!access || !can(access, "reports.export")) return null;
+    if (!access || !can(access, "reports.export") || !reportAllowed(def, access)) return null;
     const r = await def.run(tx, { tenantId, userId, access }, p);
     await writeAudit(tx, { tenantId, actorUserId: userId, action: "report.exported", entityType: "report", entityId: key, after: { format, params: p, rows: r.rows.length } });
     return r;

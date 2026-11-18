@@ -19,6 +19,7 @@ import {
   modules,
 } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
+import { courseAccess, consumeSeat } from "@/lib/billing/commerce";
 import type { ServiceResult } from "@/lib/tenancy/service";
 import type { CheckQuestion } from "@/content/types";
 
@@ -145,10 +146,15 @@ export async function enroll(tx: Tx, ctx: Ctx, courseId: string, assignmentId?: 
     if (missing.length) return { ok: false, error: `Complete the prerequisite course(s) first: ${missing.join(", ")}.` };
   }
 
+  // Paid courses: included with an active or trialing subscription, otherwise a paid seat is used.
+  const access = await courseAccess(tx, ctx.tenantId, courseId);
+  if (access.kind === "PURCHASE_REQUIRED") return { ok: false, error: "This course needs a paid seat. An administrator can buy seats under Billing → Training purchases, or you can buy it for yourself from the course page." };
+
   const [e] = await tx
     .insert(enrollments)
     .values({ tenantId: ctx.tenantId, userId: ctx.userId, courseId, courseVersionId: c.versionId, assignmentId: assignmentId ?? null })
     .returning({ id: enrollments.id });
+  if (access.kind === "SEAT") await consumeSeat(tx, ctx.tenantId, access.entitlementId, e.id, ctx.userId);
   await writeAudit(tx, { tenantId: ctx.tenantId, actorUserId: ctx.userId, action: "enrollment.created", entityType: "enrollment", entityId: e.id, after: { courseId, versionId: c.versionId } });
   return { ok: true, data: { enrollmentId: e.id, created: true } };
 }

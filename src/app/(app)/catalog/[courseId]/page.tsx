@@ -6,18 +6,24 @@ import { DEPARTMENT_LABEL, ENROLLMENT_LABEL, LESSON_TYPE_LABEL, minutes } from "
 import { CERT_TITLE, PROGRAM_LABEL } from "@/lib/certificates/labels";
 import { Alert, Badge, Button, ButtonLink, Card, PageHeader, fmtDate } from "@/components/ui";
 import { enrollAction } from "../../learning/actions";
+import { courseAccess, usd } from "@/lib/billing/commerce";
+import { stripeConfigured } from "@/lib/billing/stripe";
+import { BuySeatForSelf, BuyTraining } from "@/components/billing/buy-training";
 
 export const metadata = { title: "Course details" };
 
 type Ref = { agency?: string; citation?: string; title?: string; url?: string; publisher?: string; publishedOn?: string; accessedOn?: string; note?: string };
 
-export default async function CourseDetailPage({ params, searchParams }: { params: Promise<{ courseId: string }>; searchParams: Promise<{ error?: string }> }) {
+export default async function CourseDetailPage({ params, searchParams }: { params: Promise<{ courseId: string }>; searchParams: Promise<{ error?: string; checkout?: string }> }) {
   const { courseId } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(courseId)) notFound();
   const ctx = await requirePermission("courses.view");
-  const d = await ctx.tx((tx) => getCourseDetail(tx, courseId, ctx.user.id));
-  if (!d) notFound();
-  const { error } = await searchParams;
+  const [d, access] = await ctx.tx(async (tx) => {
+    const detail = await getCourseDetail(tx, courseId, ctx.user.id);
+    return [detail, detail ? await courseAccess(tx, ctx.tenant.id, courseId) : null] as const;
+  });
+  if (!d || !access) notFound();
+  const { error, checkout } = await searchParams;
   const { course, version } = d;
   const regs = (version.regulatoryReferences as Ref[]) ?? [];
   const srcs = ((version.sourceReferences as Ref[]) ?? []).filter((s) => s.url);
@@ -31,6 +37,8 @@ export default async function CourseDetailPage({ params, searchParams }: { param
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           {error && <Alert>{error}</Alert>}
+          {checkout === "success" && <Alert tone="green">Payment received. The seat appears here as soon as Stripe confirms it — refresh in a moment, then enroll.</Alert>}
+          {checkout === "cancelled" && <Alert tone="blue">Checkout was cancelled; nothing was charged.</Alert>}
           {isDemoPublish && <Alert tone="amber">DEMO: this course was published for demonstration without a qualified subject-matter or clinical review. Do not rely on it for compliance until reviewed.</Alert>}
           <Card title="About this course">
             <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -86,9 +94,22 @@ export default async function CourseDetailPage({ params, searchParams }: { param
               {d.rating.n > 0 && <div className="flex justify-between"><dt className="text-slate-600">Learner rating</dt><dd>{d.rating.avg} / 5 ({d.rating.n})</dd></div>}
             </dl>
             {renewal && <p className="mt-3 text-xs text-slate-500">{renewal}</p>}
+            {access.kind !== "FREE" && (
+              <p className="mt-3 rounded-md bg-slate-50 p-2 text-xs text-slate-600">
+                {access.kind === "SUBSCRIPTION" ? "Included with your organization's subscription." : access.kind === "SEAT" ? `Paid seat available (${access.seatsLeft} remaining for your organization).` : `This course is ${usd(access.priceCents)} per learner seat.`}
+              </p>
+            )}
             <div className="mt-5">
               {open ? (
                 <ButtonLink href={`/learning/${d.enrollment!.id}`} variant="teal" className="w-full">Continue ({d.enrollment!.progressPct}%)</ButtonLink>
+              ) : access.kind === "PURCHASE_REQUIRED" && !d.enrollment ? (
+                ctx.can("billing.manage") ? (
+                  <BuyTraining items={[]} fixed={{ value: `COURSE:${course.id}`, label: course.title }} online={stripeConfigured()} back={`/catalog/${course.id}`} />
+                ) : ctx.tenant.type === "INDIVIDUAL" && ctx.can("learning.self") ? (
+                  <BuySeatForSelf courseId={course.id} priceCents={access.priceCents} online={stripeConfigured()} />
+                ) : (
+                  <p className="text-sm text-slate-600">Ask your training or billing administrator for a seat in this course.</p>
+                )
               ) : ctx.can("learning.self") ? (
                 <form action={enrollAction}>
                   <input type="hidden" name="courseId" value={course.id} />

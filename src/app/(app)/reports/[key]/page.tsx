@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { asc, ne, sql } from "drizzle-orm";
 import { requirePermission } from "@/lib/auth/context";
 import { employees, facilities } from "@/db/schema";
-import { getReport, paramsSchema } from "@/lib/reports/definitions";
+import { getReport, paramsSchema, reportAllowed } from "@/lib/reports/definitions";
 import { Alert, Button, ButtonLink, Card, EmptyState, Input, PageHeader, Select, Table, Td } from "@/components/ui";
 
 export const metadata = { title: "Report" };
@@ -14,6 +14,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const def = getReport(key);
   if (!def) notFound();
   const ctx = await requirePermission("reports.view");
+  if (!reportAllowed(def, ctx.access)) notFound();
   const raw = await searchParams;
   const p = paramsSchema.parse(raw);
   const missing = (def.required ?? []).filter((k) => !p[k]);

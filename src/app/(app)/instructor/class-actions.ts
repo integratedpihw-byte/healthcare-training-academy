@@ -7,6 +7,7 @@ import { formValues, type FormState } from "@/lib/forms";
 import * as svc from "@/lib/instructors/service";
 import { systemDb } from "@/db/server";
 import { issueInstructorCertificate } from "@/lib/certificates/service";
+import { setRate } from "@/lib/instructors/compensation";
 
 const isUuid = (s: unknown): s is string => typeof s === "string" && /^[0-9a-f-]{36}$/i.test(s);
 const c = (ctx: TenantContext) => ({ tenantId: ctx.tenant.id, userId: ctx.user.id, access: ctx.access });
@@ -130,4 +131,12 @@ export async function issueInstructorCertificateAction(_: FormState, fd: FormDat
   revalidatePath("/instructor/instructors");
   revalidatePath("/certificates");
   return { ok: true, message: "Instructor certificate issued. The instructor was notified." };
+}
+
+export async function setRateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await requirePermission("instructors.manage");
+  const r = await ctx.tx((tx) => setRate(tx, { tenantId: ctx.tenant.id, userId: ctx.user.id }, obj(fd)));
+  if (!r.ok) return { error: r.error, fieldErrors: r.fieldErrors, values: formValues(fd) };
+  revalidatePath("/instructor/instructors");
+  return { ok: true, message: "Rate saved. It applies to classes on or after the effective date." };
 }

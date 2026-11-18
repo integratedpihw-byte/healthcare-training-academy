@@ -162,6 +162,13 @@
       "when": 1795036641882,
       "tag": "0022_certificate_competency_link",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795038883144,
+      "tag": "0023_training_revenue",
+      "breakpoints": true
     }
   ]
 }

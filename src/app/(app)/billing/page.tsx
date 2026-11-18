@@ -8,10 +8,12 @@ import { stripeConfigured } from "@/lib/billing/stripe";
 import { ActionForm } from "@/components/action-form";
 import { Alert, Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, fmtDate } from "@/components/ui";
 import { checkoutAction, portalAction } from "./actions";
+import { myPurchases, shopCatalog, subscriptionIncludesLibrary, usd as commerceUsd } from "@/lib/billing/commerce";
+import { BuyTraining, itemLabel } from "@/components/billing/buy-training";
 
 export const metadata = { title: "Billing" };
 
-export default async function BillingPage({ searchParams }: { searchParams: Promise<{ upgrade?: string; checkout?: string; portal?: string }> }) {
+export default async function BillingPage({ searchParams }: { searchParams: Promise<{ upgrade?: string; checkout?: string; portal?: string; order?: string }> }) {
   const ctx = await requirePermission("billing.view");
   const sp = await searchParams;
   const [subs, inv, pay, use] = await ctx.tx(async (tx) =>
@@ -23,6 +25,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     ]),
   );
   const sub = subs[0];
+  const [shop, purchases] = await ctx.tx(async (tx) => seq([shopCatalog(tx), myPurchases(tx)]));
+  const shopItems = [
+    ...shop.packages.map((p) => ({ value: `PACKAGE:${p.id}`, label: itemLabel(`Package: ${p.name}`, p.priceCents, `${p.courseIds.length} courses`) })),
+    ...shop.priced.map((c) => ({ value: `COURSE:${c.id}`, label: itemLabel(`${c.title} (${c.code})`, c.price_cents) })),
+  ];
   const e = ctx.entitlements;
   const canManage = ctx.can("billing.manage");
   const online = stripeConfigured();
@@ -32,7 +39,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       <PageHeader title="Billing" description="Your subscription, usage and invoices. Billing records are kept separate from employee training records." actions={canManage && sub?.stripeCustomerId ? <form action={portalAction}><Button type="submit" variant="secondary">Manage payment methods & invoices</Button></form> : undefined} />
       <div className="space-y-6">
         {upgrade && <Alert tone="amber">{FEATURE_LABELS[upgrade]} is not included in your current plan ({e.plan.name}). Compare plans below.</Alert>}
-        {sp.checkout === "success" && <Alert tone="green">Thank you — your payment was received. Your plan updates as soon as Stripe confirms it.</Alert>}
+        {sp.checkout === "success" && <Alert tone="green">Thank you — your payment was received. {sp.order ? "Seats appear as soon as Stripe confirms the payment (usually within a minute)." : "Your plan updates as soon as Stripe confirms it."}</Alert>}
         {sp.checkout === "cancelled" && <Alert tone="blue">Checkout was cancelled; nothing was charged.</Alert>}
         {sp.portal === "unavailable" && <Alert tone="amber">Online billing management is not available for this subscription. Contact your platform administrator.</Alert>}
         {e.restricted && <Alert tone="red">Your subscription is not active. Existing training records and certificates remain available, but new staff and content cannot be added until a plan is chosen.</Alert>}
@@ -55,6 +62,32 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           </div>
         </Card>
 
+        <Card title="Training purchases">
+          <p className="mb-4 text-sm text-slate-600">
+            {subscriptionIncludesLibrary(sub) ? "Your subscription includes the full course library. " : "Priced courses need a paid seat for each learner. "}
+            Buy seats for your staff (employer-sponsored training) or a training package; each seat covers one learner&apos;s enrollment.
+          </p>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-navy-900">Seats</h3>
+              <Table head={["Course", "Purchased", "Used", "Remaining"]} empty="No seats purchased yet.">
+                {purchases.seats.map((x) => (
+                  <tr key={x.id}><Td><div>{x.course}</div><div className="text-xs text-slate-500">{x.code}{x.revoked_at ? " · withdrawn after refund" : x.expires_at ? ` · expires ${fmtDate(x.expires_at)}` : ""}</div></Td><Td>{x.total}</Td><Td>{x.used}</Td><Td>{x.revoked_at ? 0 : x.total - x.used}</Td></tr>
+                ))}
+              </Table>
+              <h3 className="mb-2 mt-5 text-sm font-semibold text-navy-900">Orders</h3>
+              <Table head={["Placed", "Item", "Total", "Status"]} empty="No orders yet.">
+                {purchases.orders.map((o) => (
+                  <tr key={o.id}><Td className="text-xs">{fmtDate(o.createdAt)}</Td><Td><div>{o.itemName}</div><div className="text-xs text-slate-500">{o.quantity} seat{o.quantity === 1 ? "" : "s"}{o.promoCode ? ` · ${o.promoCode}` : ""}</div></Td><Td>{commerceUsd(o.totalCents)}{o.refundedCents > 0 && <div className="text-xs text-red-700">−{commerceUsd(o.refundedCents)}</div>}</Td><Td><Badge tone={o.status === "PAID" ? "green" : o.status === "PENDING" ? "amber" : "gray"}>{o.status.replace("_", " ").toLowerCase()}</Badge></Td></tr>
+                ))}
+              </Table>
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-navy-900">Buy training</h3>
+              {!canManage ? <p className="text-sm text-slate-600">Ask a billing administrator to buy seats.</p> : shopItems.length ? <BuyTraining items={shopItems} online={online} /> : <p className="text-sm text-slate-600">No priced courses or packages are offered right now — every course is included.</p>}
+            </div>
+          </div>
+        </Card>
         <Card title="Plans">
           <div className="grid gap-4 lg:grid-cols-3">
             {(["STARTER", "PROFESSIONAL", "ENTERPRISE"] as PlanCode[]).map((code) => {

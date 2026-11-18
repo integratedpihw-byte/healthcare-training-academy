@@ -12,6 +12,7 @@ import type { Db } from "@/db/client";
 import { billingEvents, invoices, payments, subscriptions } from "@/db/schema";
 import { writeAudit } from "@/lib/audit";
 import { stripePriceId, type PlanCode } from "./plans";
+import { fulfillOrder } from "./commerce";
 
 let client: Stripe | null = null;
 export function stripeConfigured() {
@@ -72,6 +73,19 @@ export async function handleStripeEvent(sys: Db, event: Stripe.Event): Promise<"
     const fresh = await tx.insert(billingEvents).values({ id: event.id, type: event.type }).onConflictDoNothing().returning({ id: billingEvents.id });
     if (!fresh.length) return "duplicate";
     const obj = event.data.object as unknown as Record<string, unknown>;
+
+    if (event.type === "checkout.session.completed" && (event.data.object as Stripe.Checkout.Session).mode === "payment") {
+      // One-time training purchase (course seats or a package).
+      const s = event.data.object as Stripe.Checkout.Session;
+      const orderId = s.metadata?.orderId;
+      if (!orderId || s.payment_status !== "paid") return "ignored";
+      await tx.update(billingEvents).set({ tenantId: s.metadata?.tenantId ?? null }).where(eq(billingEvents.id, event.id));
+      const intent = typeof s.payment_intent === "string" ? s.payment_intent : s.payment_intent?.id ?? null;
+      // Same transaction as the event record (savepoint): an event is never marked
+      // processed without its order being fulfilled.
+      await fulfillOrder(tx as unknown as Db, orderId, { method: "STRIPE", actorUserId: null, paymentIntentId: intent });
+      return "processed";
+    }
 
     if (event.type === "checkout.session.completed") {
       const s = event.data.object as Stripe.Checkout.Session;

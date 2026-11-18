@@ -1,7 +1,7 @@
 import { MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import Link from "next/link";
-import { Bell, Building2, CreditCard, LayoutDashboard, LogOut, Settings, ShieldCheck, BookOpen, GraduationCap, ClipboardList, Users, BadgeCheck, Award, Scale, Presentation, BarChart3 } from "lucide-react";
+import { Bell, Building2, CreditCard, LayoutDashboard, LogOut, Settings, ShieldCheck, BookOpen, GraduationCap, ClipboardList, Users, BadgeCheck, Award, Scale, Presentation, BarChart3, DollarSign } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { Logo } from "./ui";
 import { NavLink } from "./nav-link";
@@ -88,6 +88,10 @@ export function AppShell({
                 <NavLink href="/platform/programs">
                   <Award className="h-4 w-4" />
                   <span>Programs &amp; Approvals</span>
+                </NavLink>
+                <NavLink href="/platform/revenue">
+                  <DollarSign className="h-4 w-4" />
+                  <span>Training Revenue</span>
                 </NavLink>
               </>
             )}

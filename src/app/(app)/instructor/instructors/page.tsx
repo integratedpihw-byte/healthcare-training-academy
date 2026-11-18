@@ -7,7 +7,9 @@ import type { Credential } from "@/lib/instructors/service";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, fmtDate } from "@/components/ui";
 import { InstructorNav } from "../nav";
-import { addInstructorAction, assignCourseAction, instructorActiveAction, issueInstructorCertificateAction, unassignCourseAction } from "../class-actions";
+import { addInstructorAction, assignCourseAction, instructorActiveAction, issueInstructorCertificateAction, setRateAction, unassignCourseAction } from "../class-actions";
+import { RATE_TYPE_LABEL, ratesFor } from "@/lib/instructors/compensation";
+import { usd } from "@/lib/billing/commerce";
 
 export const metadata = { title: "Instructors" };
 
@@ -17,6 +19,7 @@ export default async function InstructorsPage() {
     list: await listInstructors(tx),
     members: await memberOptions(tx),
     courses: await tx.select({ id: courses.id, title: courses.title }).from(courses).where(eq(courses.status, "PUBLISHED")).orderBy(asc(courses.title)),
+    rates: await ratesFor(tx),
   }));
   const existing = new Set(d.list.map((r) => r.i.userId));
   const today = new Date().toISOString().slice(0, 10);
@@ -68,6 +71,24 @@ export default async function InstructorsPage() {
                     )}
                   </div>
                 </div>
+                <details className="mt-3 rounded-md border border-slate-200 p-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-navy-900">
+                    Compensation{(() => { const cur = d.rates.find((x) => x.instructorId === r.i.id && x.effectiveFrom <= today); return cur ? `: ${usd(cur.rateCents)} ${RATE_TYPE_LABEL[cur.rateType].toLowerCase()}` : ": no rate on file"; })()}
+                  </summary>
+                  {d.rates.filter((x) => x.instructorId === r.i.id).length > 0 && (
+                    <ul className="mt-2 space-y-1 text-xs text-slate-600">
+                      {d.rates.filter((x) => x.instructorId === r.i.id).map((x) => <li key={x.id}>From {fmtDate(x.effectiveFrom)}: {usd(x.rateCents)} {RATE_TYPE_LABEL[x.rateType].toLowerCase()}{x.notes ? ` — ${x.notes}` : ""}</li>)}
+                    </ul>
+                  )}
+                  <ActionForm action={setRateAction} submitLabel="Save rate" variant="secondary" className="mt-3 grid gap-2 sm:grid-cols-3">
+                    <input type="hidden" name="instructorId" value={r.i.id} />
+                    <Select name="rateType" aria-label="Rate basis">{Object.entries(RATE_TYPE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select>
+                    <Input name="rate" type="number" min={0} step="0.01" placeholder="USD" required aria-label="Rate (USD)" />
+                    <Input name="effectiveFrom" type="date" defaultValue={today} required aria-label="Effective from" />
+                    <Input name="notes" placeholder="Notes (optional)" className="sm:col-span-3" aria-label="Rate notes" />
+                  </ActionForm>
+                  <p className="mt-2 text-xs text-slate-500">Visible only to people who manage instructors or view billing. See the Instructor compensation report for amounts.</p>
+                </details>
                 <form action={instructorActiveAction} className="mt-3">
                   <input type="hidden" name="instructorId" value={r.i.id} /><input type="hidden" name="active" value={r.i.isActive ? "0" : "1"} />
                   <Button type="submit" variant="ghost">{r.i.isActive ? "Deactivate" : "Reactivate"}</Button>
