@@ -27,6 +27,12 @@ import { culturalLinguisticCompetence } from "./courses/public-health/cultural-l
 import { caseManagementFundamentals } from "./courses/public-health/case-management-fundamentals";
 import { ryanWhiteCaseManagement } from "./courses/public-health/ryan-white-case-management";
 import { motivationalInterviewingTransitions } from "./courses/public-health/motivational-interviewing-transitions";
+import { hhaTraining } from "./courses/home-health/hha-training";
+import { personalCareAssistant } from "./courses/home-health/personal-care-assistant";
+import { dementiaCare } from "./courses/home-health/dementia-care";
+import { medicationAssistance } from "./courses/home-health/medication-assistance";
+import { homeInfectionControl } from "./courses/home-health/infection-control-safety";
+import { specializedHomeHealth } from "./courses/home-health/specialized-home-health";
 
 /**
  * Library: the 15 priority launch courses of spec §24, followed by the public health
@@ -64,5 +70,12 @@ export const LIBRARY: CourseContent[] = [
   caseManagementFundamentals,
   ryanWhiteCaseManagement,
   motivationalInterviewingTransitions,
+  // Home Health division
+  hhaTraining,
+  personalCareAssistant,
+  dementiaCare,
+  medicationAssistance,
+  homeInfectionControl,
+  specializedHomeHealth,
 ];
 export * from "./types";

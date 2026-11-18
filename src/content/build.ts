@@ -52,6 +52,8 @@ export const kc = (id: string, prompt: string, options: string[], correct: numbe
 
 export const text = (title: string, durationMinutes: number, body: string): LessonContent => ({ title, type: "TEXT", durationMinutes, body });
 export const caseStudy = (title: string, durationMinutes: number, body: string): LessonContent => ({ title, type: "CASE_STUDY", durationMinutes, body });
+/** Slide presentation: slides separated by a line containing only `---`. */
+export const slides = (title: string, durationMinutes: number, body: string): LessonContent => ({ title, type: "PRESENTATION", durationMinutes, body });
 export const check = (title: string, questions: CheckQuestion[]): LessonContent => ({
   title,
   type: "KNOWLEDGE_CHECK",
