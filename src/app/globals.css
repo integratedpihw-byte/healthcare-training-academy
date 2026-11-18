@@ -80,3 +80,13 @@ body {
 .grid > * {
   min-width: 0;
 }
+
+/* Page-loading bar: grows quickly at first, then slows while the server responds. */
+@keyframes nav-progress-start {
+  0% { width: 0; }
+  10% { width: 45%; }
+  100% { width: 85%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes nav-progress-start { from, to { width: 60%; } }
+}

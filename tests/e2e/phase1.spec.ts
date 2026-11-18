@@ -40,10 +40,15 @@ const newOrg = { name: `Coastal Behavioral Health ${stamp}`, email: `owner+${sta
 
 test("organization registration → pending → platform approval → active dashboard", async ({ page }) => {
   await page.goto("/register");
+  await page.getByRole("button", { name: "Continue" }).click(); // required fields still empty: stays on step 1
+  await expect(page.getByLabel("Work email")).toBeHidden();
   await page.getByLabel("Organization name").fill(newOrg.name);
   await page.getByLabel("First facility name").fill("Coastal BH – Jacksonville");
   await page.getByLabel("Facility type").selectOption("BEHAVIORAL_HEALTH");
   await page.getByLabel("City").fill("Jacksonville");
+  await expect(page.getByLabel("Work email")).toBeHidden(); // step 1 shows only the organization
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expect(page.getByRole("heading", { name: /Step 2 of 2/ })).toBeFocused();
   await page.getByLabel("First name").fill("Casey");
   await page.getByLabel("Last name").fill("Rivers");
   await page.getByLabel("Work email").fill(newOrg.email);

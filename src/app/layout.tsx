@@ -1,3 +1,4 @@
+import { NavProgress } from "@/components/nav-progress";
 import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
@@ -19,6 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body className="min-h-screen bg-white">
         <a href="#main" className="skip-link">Skip to main content</a>
+        <NavProgress />
         {children}
       </body>
     </html>
