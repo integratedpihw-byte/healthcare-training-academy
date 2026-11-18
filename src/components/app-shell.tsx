@@ -85,6 +85,10 @@ export function AppShell({
                   <Scale className="h-4 w-4" />
                   <span>Regulatory Library</span>
                 </NavLink>
+                <NavLink href="/platform/programs">
+                  <Award className="h-4 w-4" />
+                  <span>Programs &amp; Approvals</span>
+                </NavLink>
               </>
             )}
           </nav>

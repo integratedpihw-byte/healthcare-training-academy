@@ -19,6 +19,8 @@ export const COURSE_CATEGORIES = [
   { slug: "emergency-management", name: "Emergency Management & Response", department: "EMERGENCY_MANAGEMENT" },
   { slug: "public-health-practice", name: "Public Health Practice", department: "PUBLIC_HEALTH" },
   { slug: "case-management", name: "Case Management & Care Coordination", department: "CASE_MANAGEMENT" },
+  { slug: "home-health", name: "Home Health Worker Training", department: "HOME_HEALTH" },
+  { slug: "mental-health", name: "Mental Health & Behavioral Health", department: "MENTAL_HEALTH" },
 ] as const;
 
 export async function seedReference(db: Db) {

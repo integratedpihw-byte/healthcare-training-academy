@@ -4,7 +4,7 @@
  * the first load go through the versioning workflow, never silent overwrites.
  * New library versions start IN_REVIEW and must pass the approval workflow.
  */
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "../client";
 import {
   courseApprovals,
@@ -32,6 +32,15 @@ export async function seedLibrary(db: Db): Promise<{ created: string[]; skipped:
     await db.transaction(async (tx) => insertCourse(tx as unknown as Db, c));
     created.push(c.code);
   }
+  // Course-level labels (not lesson content) follow the library so existing courses
+  // pick up a corrected program type; content itself changes only through versioning.
+  // A classification backed by a recorded approval is never overwritten.
+  for (const c of LIBRARY) {
+    await db
+      .update(courses)
+      .set({ programClassification: c.programClassification ?? "GENERAL_EDUCATION", certificateType: c.certificateType ?? "COURSE_COMPLETION" })
+      .where(and(isNull(courses.tenantId), eq(courses.code, c.code), sql`${courses.programClassification}::text not in ('STATE_APPROVED_PROGRAM', 'CONTINUING_EDUCATION')`, sql`(${courses.programClassification}::text, ${courses.certificateType}::text) is distinct from (${c.programClassification ?? "GENERAL_EDUCATION"}, ${c.certificateType ?? "COURSE_COMPLETION"})`));
+  }
   return { created, skipped };
 }
 
@@ -50,6 +59,8 @@ async function insertCourse(tx: Db, c: CourseContent) {
       passingScore: c.passingScore,
       renewalMonths: c.renewalMonths,
       estimatedMinutes: c.estimatedMinutes,
+      programClassification: c.programClassification ?? "GENERAL_EDUCATION",
+      certificateType: c.certificateType ?? "COURSE_COMPLETION",
     })
     .returning({ id: courses.id });
   const [version] = await tx
@@ -66,6 +77,9 @@ async function insertCourse(tx: Db, c: CourseContent) {
       completionCriteria: c.completionCriteria,
       authorName: AUTHOR_NOTE,
       clinicalReviewRequired: c.clinicalReviewRequired,
+      credentialNotice: c.credentialNotice ?? null,
+      renewalRequirements: c.renewalRequirements ?? null,
+      instructorResources: c.instructorResources ?? null,
       revisedAt: new Date(),
     })
     .returning({ id: courseVersions.id });

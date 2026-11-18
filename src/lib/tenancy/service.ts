@@ -304,6 +304,9 @@ export const organizationProfileSchema = z.object({
   postalCode: z.string().trim().max(12).optional().or(z.literal("")),
   timeZone: z.enum(TIME_ZONES.map((t) => t.id) as [string, ...string[]]).optional(),
   mfaPolicy: z.enum(["ADMINS", "ALL", "OFF"]).optional(),
+  certificateNameDisplay: z.enum(["FULL", "INITIALS"]).optional(),
+  certificateSignatoryName: z.string().trim().max(100).optional().or(z.literal("")),
+  certificateSignatoryTitle: z.string().trim().max(100).optional().or(z.literal("")),
 });
 
 export async function updateOrganization(tx: Tx, ctx: { tenantId: string; userId: string }, orgId: string, raw: unknown): Promise<ServiceResult<null>> {
@@ -324,6 +327,8 @@ export async function updateOrganization(tx: Tx, ctx: { tenantId: string; userId
     postalCode: v.postalCode || null,
     ...(v.timeZone ? { timeZone: v.timeZone } : {}),
     ...(v.mfaPolicy ? { mfaPolicy: v.mfaPolicy } : {}),
+    ...(v.certificateNameDisplay ? { certificateNameDisplay: v.certificateNameDisplay } : {}),
+    ...(v.certificateSignatoryName !== undefined ? { certificateSignatoryName: v.certificateSignatoryName || null, certificateSignatoryTitle: v.certificateSignatoryTitle || null } : {}),
   };
   await tx.update(organizations).set(values).where(eq(organizations.id, orgId));
   await writeAudit(tx, { tenantId: ctx.tenantId, actorUserId: ctx.userId, action: "organization.updated", entityType: "organization", entityId: orgId, before, after: values });

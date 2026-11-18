@@ -78,7 +78,7 @@ describe("row-level security: tenant isolation", () => {
 
   it("platform-global content is readable by every tenant but writable by none", async () => {
     const cats = await asAdmin(A)((tx) => tx.select().from(courseCategories).where(isNull(courseCategories.tenantId)));
-    expect(cats.length).toBe(10);
+    expect(cats.length).toBe(12);
     const err = await expectPgError(asAdmin(A)((tx) => tx.insert(courseCategories).values({ name: "Hijack", slug: "hijack", department: "MANDATORY_COMPLIANCE" })));
     expect(err.code).toBe("42501");
     const upd = await asAdmin(A)((tx) => tx.update(courseCategories).set({ name: "Changed" }).where(isNull(courseCategories.tenantId)).returning());

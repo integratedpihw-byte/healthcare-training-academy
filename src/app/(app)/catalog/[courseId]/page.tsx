@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth/context";
 import { getCourseDetail } from "@/lib/learning/learner";
 import { DEPARTMENT_LABEL, ENROLLMENT_LABEL, LESSON_TYPE_LABEL, minutes } from "@/lib/learning/labels";
+import { CERT_TITLE, PROGRAM_LABEL } from "@/lib/certificates/labels";
 import { Alert, Badge, Button, ButtonLink, Card, PageHeader, fmtDate } from "@/components/ui";
 import { enrollAction } from "../../learning/actions";
 
@@ -32,9 +33,17 @@ export default async function CourseDetailPage({ params, searchParams }: { param
           {error && <Alert>{error}</Alert>}
           {isDemoPublish && <Alert tone="amber">DEMO: this course was published for demonstration without a qualified subject-matter or clinical review. Do not rely on it for compliance until reviewed.</Alert>}
           <Card title="About this course">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge tone="teal">{PROGRAM_LABEL[course.programClassification]?.label}</Badge>
+              {course.certificateEligible && <Badge tone="gray">{CERT_TITLE[course.certificateType]}</Badge>}
+              <span className="text-xs text-slate-500">{(course.estimatedMinutes / 60).toFixed(1)} instructional hours</span>
+            </div>
+            {version.credentialNotice && <div className="mb-4"><Alert tone="amber"><strong>What this course is and is not.</strong> {version.credentialNotice}</Alert></div>}
             <p className="text-sm leading-relaxed text-slate-700">{version.description}</p>
             <h3 className="mt-5 text-sm font-semibold text-navy-900">Who should take it</h3>
             <p className="mt-1 text-sm text-slate-700">{version.targetAudience}</p>
+            {version.renewalRequirements && (<><h3 className="mt-5 text-sm font-semibold text-navy-900">Renewal</h3><p className="mt-1 text-sm text-slate-700">{version.renewalRequirements}</p></>)}
+            <p className="mt-4 text-xs text-slate-500">{PROGRAM_LABEL[course.programClassification]?.help}</p>
           </Card>
           <Card title="Learning objectives">
             <ol className="list-decimal space-y-1.5 pl-5 text-sm text-slate-700">{d.objectives.map((o) => <li key={o.id}>{o.text}</li>)}</ol>

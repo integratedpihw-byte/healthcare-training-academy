@@ -71,6 +71,19 @@ export interface CourseContent {
   sourceReferences: Reference[];
   modules: { title: string; summary: string; lessons: LessonContent[] }[];
   finalExam: { title: string; passingScore: number; questionCount: number; questions: ExamQuestion[] };
+  /**
+   * Program type (brief §6). Never STATE_APPROVED_PROGRAM or CONTINUING_EDUCATION in
+   * library content: those require a recorded approval (the database refuses otherwise).
+   */
+  programClassification?: "GENERAL_EDUCATION" | "EMPLOYER_REQUIRED" | "STATE_REGULATED_TRAINING" | "PROFESSION_SPECIFIC";
+  certificateType?: "COURSE_COMPLETION" | "PROFESSIONAL_DEVELOPMENT" | "SPECIALIZED_TRAINING";
+  /** What the course is and is not, in plain words; printed on the certificate. */
+  credentialNotice?: string;
+  renewalRequirements?: string;
+  /** Instructor notes (Markdown): practical-skills set-up, discussion prompts, answer guidance. */
+  instructorResources?: string;
+  /** Codes of competency checklists (src/content/competencies.ts) that complete this course in practice. */
+  competencyCodes?: string[];
 }
 
 export const AUTHOR_NOTE =

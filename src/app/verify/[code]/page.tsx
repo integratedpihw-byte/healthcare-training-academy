@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { systemDb } from "@/db/server";
 import { requestMeta } from "@/lib/auth/context";
-import { verifyCertificate } from "@/lib/certificates/service";
-import { CERTIFICATE_DISCLAIMER } from "@/lib/certificates/service";
+import { disclaimerFor, verifyCertificate } from "@/lib/certificates/service";
+import { CERT_TITLE, PROGRAM_LABEL } from "@/lib/certificates/labels";
 import { Alert, Card, fmtDate } from "@/components/ui";
 
 export const metadata = { title: "Certificate verification", robots: { index: false } };
@@ -34,15 +34,21 @@ export default async function VerifyCodePage({ params }: { params: Promise<{ cod
       <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">Certificate verification</p>
       <div className="mt-3"><Alert tone={s.tone}><strong>{s.label}.</strong> {s.text}{c.revokedAt ? ` Revoked on ${fmtDate(c.revokedAt)}.` : ""}</Alert></div>
       <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-        <div><dt className="text-xs text-slate-500">Recipient</dt><dd className="text-base font-semibold text-navy-900">{c.recipientName}</dd></div>
-        <div><dt className="text-xs text-slate-500">Course</dt><dd className="font-medium text-navy-900">{c.courseTitle}{c.courseCode ? ` (${c.courseCode})` : ""}</dd></div>
-        <div><dt className="text-xs text-slate-500">Completion date</dt><dd>{fmtDate(c.completedOn)}</dd></div>
+        <div><dt className="text-xs text-slate-500">Recipient</dt><dd className="text-base font-semibold text-navy-900">{c.recipientName}</dd>{c.nameMasked && <p className="mt-0.5 text-xs text-slate-500">Shown as initials at the issuing organization&apos;s request. Compare with the name on the certificate.</p>}</div>
+        <div><dt className="text-xs text-slate-500">Certificate type</dt><dd className="font-medium text-navy-900">{CERT_TITLE[c.kind] ?? c.kind}</dd></div>
+        <div><dt className="text-xs text-slate-500">{c.kind === "COMPETENCY_VERIFICATION" ? "Skill" : "Course"}</dt><dd className="font-medium text-navy-900">{c.courseTitle}{c.courseCode ? ` (${c.courseCode})` : ""}</dd></div>
+        <div><dt className="text-xs text-slate-500">{c.kind === "COMPETENCY_VERIFICATION" ? "Evaluation date" : "Completion date"}</dt><dd>{fmtDate(c.completedOn)}</dd></div>
         <div><dt className="text-xs text-slate-500">Valid through</dt><dd>{c.expiresOn ? fmtDate(c.expiresOn) : "No expiration"}</dd></div>
         <div><dt className="text-xs text-slate-500">Training hours</dt><dd>{Number(c.trainingHours).toFixed(2)}</dd></div>
         <div><dt className="text-xs text-slate-500">Certificate number</dt><dd className="font-mono">{c.number}</dd></div>
+        {c.instructorName && <div><dt className="text-xs text-slate-500">{c.kind === "COMPETENCY_VERIFICATION" ? "Evaluator" : "Instructor"}</dt><dd>{c.instructorName}</dd></div>}
+        {c.programClassification && PROGRAM_LABEL[c.programClassification] && <div><dt className="text-xs text-slate-500">Program type</dt><dd>{PROGRAM_LABEL[c.programClassification].label}</dd></div>}
         <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Issued by</dt><dd>{c.issuingAuthority}</dd></div>
+        {c.renewalRequirements && <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Renewal</dt><dd>{c.renewalRequirements}</dd></div>}
+        {c.correctionReason && <div className="sm:col-span-2"><dt className="text-xs text-slate-500">Corrected certificate</dt><dd>This certificate replaces an earlier one that contained an error.</dd></div>}
       </dl>
-      <p className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500">{c.kind === "COURSE_COMPLETION" ? CERTIFICATE_DISCLAIMER : ""}</p>
+      {c.programNotice && <p className="mt-5 rounded-md bg-slate-50 p-3 text-sm text-slate-700">{c.programNotice}</p>}
+      <p className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500">{disclaimerFor(c.kind)}</p>
     </Card>
   );
 }

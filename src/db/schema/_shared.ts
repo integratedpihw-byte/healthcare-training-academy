@@ -73,6 +73,8 @@ export const courseDepartment = pgEnum("course_department", [
   "EMERGENCY_MANAGEMENT",
   "PUBLIC_HEALTH",
   "CASE_MANAGEMENT",
+  "HOME_HEALTH",
+  "MENTAL_HEALTH",
 ]);
 /** Draft → Review → Clinical Approval → Compliance Approval → Published → Archived */
 export const contentStatus = pgEnum("content_status", [
@@ -143,7 +145,25 @@ export const certificateKind = pgEnum("certificate_kind", [
   "COURSE_COMPLETION",
   "CONTINUING_EDUCATION",
   "COMPETENCY_VERIFICATION",
+  "PROFESSIONAL_DEVELOPMENT",
+  "INSTRUCTOR",
+  "SPECIALIZED_TRAINING",
 ]);
+/**
+ * What kind of program a course is (expansion brief §6). STATE_APPROVED_PROGRAM and
+ * CONTINUING_EDUCATION may be claimed only while an approval is recorded in
+ * program_approvals (enforced in the database).
+ */
+export const PROGRAM_CLASSIFICATIONS = [
+  "GENERAL_EDUCATION",
+  "EMPLOYER_REQUIRED",
+  "STATE_REGULATED_TRAINING",
+  "STATE_APPROVED_PROGRAM",
+  "CONTINUING_EDUCATION",
+  "PROFESSION_SPECIFIC",
+] as const;
+export type ProgramClassification = (typeof PROGRAM_CLASSIFICATIONS)[number];
+export const programClassification = pgEnum("program_classification", PROGRAM_CLASSIFICATIONS);
 export const certificateStatus = pgEnum("certificate_status", [
   "ACTIVE",
   "EXPIRED",

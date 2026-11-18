@@ -39,7 +39,8 @@ export const PERMISSIONS = {
   "competency.sign": { category: "Competency", description: "Electronically sign competency assessments" },
   // Certificates
   "certificates.view_all": { category: "Certificates", description: "View certificates for employees in scope" },
-  "certificates.revoke": { category: "Certificates", description: "Revoke certificates (with reason)" },
+  "certificates.revoke": { category: "Certificates", description: "Revoke and correct certificates (with reason)" },
+  "certificates.issue": { category: "Certificates", description: "Issue instructor certificates" },
   // Compliance
   "compliance.view": { category: "Compliance", description: "View compliance status and regulatory requirements" },
   "compliance.manage": { category: "Compliance", description: "Manage organization compliance rules and reviews" },
@@ -70,7 +71,11 @@ export type SystemRoleKey =
   | "instructor"
   | "supervisor"
   | "clinical_reviewer"
-  | "learner";
+  | "learner"
+  | "academy_director"
+  | "compliance_officer"
+  | "course_administrator"
+  | "certificate_verifier";
 
 export const SYSTEM_ROLES: Record<
   SystemRoleKey,
@@ -102,6 +107,7 @@ export const SYSTEM_ROLES: Record<
       "assessments.review",
       "competency.view",
       "certificates.view_all",
+      "certificates.issue",
       "compliance.view",
       "compliance.manage",
       "reports.view",
@@ -171,6 +177,60 @@ export const SYSTEM_ROLES: Record<
     description: "Qualified, licensed clinician who grants clinical approval of course content",
     facilityScoped: false,
     permissions: ["courses.view", "courses.review", "courses.approve.clinical", "learning.self"],
+  },
+  academy_director: {
+    name: "Academy Director",
+    description: "Leads the training academy: programs, instructors, certificates, revenue and reports",
+    facilityScoped: false,
+    permissions: ALL_PERMISSIONS.filter((p) => p !== "courses.approve.clinical" && p !== "integrations.manage" && p !== "org.roles.manage"),
+  },
+  compliance_officer: {
+    name: "Compliance Officer",
+    description: "Oversees regulatory requirements, compliance approval of courses, certificates and audit trails",
+    facilityScoped: false,
+    permissions: [
+      "employees.view",
+      "training.view_all",
+      "courses.view",
+      "courses.review",
+      "courses.approve.compliance",
+      "competency.view",
+      "certificates.view_all",
+      "certificates.revoke",
+      "compliance.view",
+      "compliance.manage",
+      "reports.view",
+      "reports.export",
+      "audit.view",
+      "learning.self",
+    ],
+  },
+  course_administrator: {
+    name: "Course Administrator",
+    description: "Builds and publishes courses, examinations and schedules; assigns training",
+    facilityScoped: false,
+    permissions: [
+      "courses.view",
+      "courses.author",
+      "courses.review",
+      "courses.publish",
+      "training.view_all",
+      "training.assign",
+      "training.requirements.manage",
+      "training.schedule.manage",
+      "assessments.review",
+      "instructors.manage",
+      "certificates.view_all",
+      "certificates.issue",
+      "reports.view",
+      "learning.self",
+    ],
+  },
+  certificate_verifier: {
+    name: "Certificate Verification User",
+    description: "Read-only access to staff certificates and their verification history",
+    facilityScoped: false,
+    permissions: ["employees.view", "certificates.view_all", "learning.self"],
   },
   learner: {
     name: "Healthcare Employee / Student",

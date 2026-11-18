@@ -27,6 +27,7 @@ import {
   attendanceStatus,
   certificateKind,
   certificateStatus,
+  programClassification,
   competencyAssessmentStatus,
   competencyResult,
   contentStatus,
@@ -93,6 +94,10 @@ export const courses = pgTable(
     /** NULL = no renewal. Never inferred: set only from verified rules or org policy. */
     renewalMonths: integer(),
     estimatedMinutes: integer().notNull().default(60),
+    /** Program type shown in the catalog and on certificates (brief §6). */
+    programClassification: programClassification().notNull().default("GENERAL_EDUCATION"),
+    /** Certificate type issued on completion. */
+    certificateType: certificateKind("certificate_type").notNull().default("COURSE_COMPLETION"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -126,6 +131,12 @@ export const courseVersions = pgTable(
     reviewerUserId: uuid(),
     reviewerName: text(),
     clinicalReviewRequired: boolean().notNull().default(false),
+    /** Plain statement of what this course is and is not (e.g. "educational; does not by itself meet …"). */
+    credentialNotice: text(),
+    /** Renewal / continuing education requirements, where a program establishes them. */
+    renewalRequirements: text(),
+    /** Instructor notes and resources (Markdown), shown to instructors and course authors only. */
+    instructorResources: text(),
     publishedAt: tstz(),
     revisedAt: tstz(),
     createdAt: createdAt(),
@@ -756,6 +767,18 @@ export const certificates = pgTable(
     revokedById: uuid(),
     revocationReason: text(),
     supersedesId: uuid(),
+    programClassification: programClassification(),
+    /** Copied from the course version at issue: what the certificate does and does not represent. */
+    programNotice: text(),
+    instructorName: text(),
+    signatoryName: text(),
+    signatoryTitle: text(),
+    renewalRequirements: text(),
+    /** Set on a replacement certificate issued to correct an error in the one it supersedes. */
+    correctionReason: text(),
+    issuedById: uuid(),
+    /** Certificate of Competency: the signed skills evaluation it documents. */
+    competencyAssessmentId: uuid(),
   },
   (t) => [index().on(t.tenantId), index().on(t.tenantId, t.expiresOn), index().on(t.userId)],
 );
@@ -773,4 +796,37 @@ export const certificateVerifications = pgTable(
     userAgent: text(),
   },
   (t) => [index().on(t.tenantId)],
+);
+
+/**
+ * Register of real approvals and accreditations (state program approvals, CE provider
+ * approvals, DOEA curriculum approvals …). Platform-owned; read-only to tenants.
+ * A course may be classified STATE_APPROVED_PROGRAM or CONTINUING_EDUCATION only while
+ * an ACTIVE, unexpired approval exists here.
+ */
+export const programApprovals = pgTable(
+  "program_approvals",
+  {
+    id: pk(),
+    courseId: uuid()
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    kind: text().notNull(),
+    approvingBody: text().notNull(),
+    approvalNumber: text().notNull(),
+    scope: text(),
+    effectiveOn: date().notNull(),
+    expiresOn: date(),
+    status: text().notNull().default("ACTIVE"),
+    sourceUrl: text(),
+    verifiedOn: date().notNull(),
+    verifiedById: uuid(),
+    notes: text(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index().on(t.courseId),
+    check("program_approvals_kind", sql`${t.kind} in ('STATE_PROGRAM_APPROVAL','CE_PROVIDER_APPROVAL','CURRICULUM_APPROVAL','ACCREDITATION','PARTNER_AUTHORIZATION')`),
+    check("program_approvals_status", sql`${t.status} in ('ACTIVE','EXPIRED','WITHDRAWN')`),
+  ],
 );

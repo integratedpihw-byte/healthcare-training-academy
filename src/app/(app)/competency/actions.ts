@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { systemDb } from "@/db/server";
 import { requirePermission, requireFeature } from "@/lib/auth/context";
 import { deleteDraft, saveDraft, signAssessment, voidAssessment } from "@/lib/competency/service";
+import { issueForCompetency, revokeForVoidedCompetency } from "@/lib/certificates/service";
 import { formValues, type FormState } from "@/lib/forms";
 
 function collect(fd: FormData) {
@@ -47,8 +48,11 @@ export async function signAction(_: FormState, fd: FormData): Promise<FormState>
     }),
   );
   if (!r.ok) return { error: r.error };
+  // After the signature commits: issue the Certificate of Competency for a PASS.
+  await issueForCompetency(systemDb(), id);
   revalidatePath(`/competency/${id}`);
   revalidatePath("/competency");
+  revalidatePath("/certificates");
   redirect(`/competency/${id}?signed=1`);
 }
 
@@ -56,10 +60,14 @@ export async function voidAction(_: FormState, fd: FormData): Promise<FormState>
   const ctx = await requirePermission("competency.sign");
   requireFeature(ctx, "competency");
   const id = String(fd.get("assessmentId") ?? "");
-  const r = await ctx.tx((tx) => voidAssessment(tx, { tenantId: ctx.tenant.id, userId: ctx.user.id, access: ctx.access }, id, String(fd.get("reason") ?? "")));
+  const reason = String(fd.get("reason") ?? "");
+  const r = await ctx.tx((tx) => voidAssessment(tx, { tenantId: ctx.tenant.id, userId: ctx.user.id, access: ctx.access }, id, reason));
   if (!r.ok) return { error: r.error };
+  // After the void commits: the evaluation no longer supports its Certificate of Competency.
+  const revoked = await revokeForVoidedCompetency(systemDb(), id, ctx.user.id, reason.trim());
   revalidatePath(`/competency/${id}`);
-  return { ok: true, message: "Record voided." };
+  revalidatePath("/certificates");
+  return { ok: true, message: revoked ? "Record voided. Its Certificate of Competency was revoked." : "Record voided." };
 }
 
 export async function deleteDraftAction(fd: FormData) {

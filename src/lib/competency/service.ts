@@ -188,6 +188,8 @@ export async function signAssessment(
     const [comp] = await tx.select({ name: competencies.name }).from(competencies).where(eq(competencies.id, a.competencyId));
     await notify(sys, { tenantId: ctx.tenantId, userId: emp.userId, type: "competency.recorded", title: "Skills evaluation recorded", body: `A ${comp?.name ?? "skills"} evaluation was signed with result: ${a.result.replace("_", " ").toLowerCase()}.`, link: `/competency/${id}`, dedupeKey: `comp:${id}` });
   }
+  // The Certificate of Competency is issued by the caller after this transaction commits
+  // (issueForCompetency), with a daily repair job as a safety net.
   return { ok: true, data: { signatureHash } };
 }
 
@@ -198,6 +200,7 @@ export async function voidAssessment(tx: Tx, ctx: Ctx, id: string, reason: strin
   if (!a || a.status !== "SIGNED") return err("Only signed assessments can be voided.");
   await tx.update(competencyAssessments).set({ status: "VOIDED", voidReason: reason.trim(), voidedById: ctx.userId }).where(eq(competencyAssessments.id, id));
   await writeAudit(tx, { tenantId: ctx.tenantId, actorUserId: ctx.userId, action: "competency.voided", entityType: "competency_assessment", entityId: id, after: { reason: reason.trim() } });
+  // The caller revokes the Certificate of Competency after this commits (revokeForVoidedCompetency).
   return { ok: true, data: null };
 }
 

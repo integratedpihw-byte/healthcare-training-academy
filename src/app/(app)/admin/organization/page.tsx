@@ -40,6 +40,21 @@ export default async function OrgPage() {
               </Select>
             </Field>
           </div>
+          <h3 className="mt-6 text-sm font-semibold text-navy-900">Certificates</h3>
+          <div className="mt-2 grid gap-4 sm:grid-cols-2">
+            <Field label="Authorized signatory name" name="certificateSignatoryName" hint="Printed as a typed signature on new certificates. Leave blank to show the issuing organization only.">
+              <Input id="certificateSignatoryName" name="certificateSignatoryName" defaultValue={org.certificateSignatoryName ?? ""} maxLength={100} />
+            </Field>
+            <Field label="Signatory title" name="certificateSignatoryTitle" hint="For example: Director of Nursing, Training Director.">
+              <Input id="certificateSignatoryTitle" name="certificateSignatoryTitle" defaultValue={org.certificateSignatoryTitle ?? ""} maxLength={100} />
+            </Field>
+            <Field label="Name on the public verification page" name="certificateNameDisplay" hint="Employers checking a certificate see either the full name or initials only.">
+              <Select id="certificateNameDisplay" name="certificateNameDisplay" defaultValue={org.certificateNameDisplay}>
+                <option value="FULL">Full name</option>
+                <option value="INITIALS">Initials only</option>
+              </Select>
+            </Field>
+          </div>
         </ActionForm>
       </Card>
     </>

@@ -7,7 +7,7 @@ import type { Credential } from "@/lib/instructors/service";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Select, fmtDate } from "@/components/ui";
 import { InstructorNav } from "../nav";
-import { addInstructorAction, assignCourseAction, instructorActiveAction, unassignCourseAction } from "../class-actions";
+import { addInstructorAction, assignCourseAction, instructorActiveAction, issueInstructorCertificateAction, unassignCourseAction } from "../class-actions";
 
 export const metadata = { title: "Instructors" };
 
@@ -58,6 +58,14 @@ export default async function InstructorsPage() {
                       <input type="hidden" name="instructorId" value={r.i.id} />
                       <Select name="courseId" aria-label={`Course to assign to ${r.first} ${r.last}`} required>{d.courses.filter((c) => !assigned.has(c.id)).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</Select>
                     </ActionForm>
+                    {ctx.can("certificates.issue") && r.courses.length > 0 && r.i.isActive && (
+                      <ActionForm action={issueInstructorCertificateAction} submitLabel="Issue instructor certificate" variant="secondary" className="mt-3 space-y-2" confirm="Issue an instructor certificate? It is recorded permanently and can be verified publicly.">
+                        <input type="hidden" name="instructorId" value={r.i.id} />
+                        <Select name="courseId" aria-label={`Course for ${r.first} ${r.last}'s instructor certificate`} required>{r.courses.map((c) => <option key={c.courseId} value={c.courseId}>{c.title}</option>)}</Select>
+                        <Input name="hours" type="number" min={0} max={500} step="0.5" defaultValue={0} aria-label="Instructor training hours completed" />
+                        <p className="text-xs text-slate-500">Hours of instructor preparation completed (0 if none). This records your organization&apos;s authorization to teach; it is not a teaching license.</p>
+                      </ActionForm>
+                    )}
                   </div>
                 </div>
                 <form action={instructorActiveAction} className="mt-3">

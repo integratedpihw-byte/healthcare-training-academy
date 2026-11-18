@@ -11,6 +11,8 @@ export const DEPARTMENT_LABEL: Record<string, string> = {
   EMERGENCY_MANAGEMENT: "Emergency Management & Response",
   PUBLIC_HEALTH: "Public Health Practice",
   CASE_MANAGEMENT: "Case Management & Care Coordination",
+  HOME_HEALTH: "Home Health Worker Training",
+  MENTAL_HEALTH: "Mental Health & Behavioral Health",
 };
 
 export const ENROLLMENT_LABEL: Record<string, { label: string; tone: Tone }> = {

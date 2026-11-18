@@ -79,6 +79,11 @@ export const organizations = pgTable(
     timeZone: text().notNull().default("America/New_York"),
     /** Who must use two-step verification: ADMINS (users who manage people or settings), ALL or OFF. */
     mfaPolicy: text().notNull().default("ADMINS"),
+    /** How the recipient's name appears on the public verification page: FULL or INITIALS. */
+    certificateNameDisplay: text().notNull().default("FULL"),
+    /** Person who signs certificates for this organization (typed name; never an image of a signature). */
+    certificateSignatoryName: text(),
+    certificateSignatoryTitle: text(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireAnyPermission, requirePermission, requireTenant, type TenantContext } from "@/lib/auth/context";
 import { formValues, type FormState } from "@/lib/forms";
 import * as svc from "@/lib/instructors/service";
+import { systemDb } from "@/db/server";
+import { issueInstructorCertificate } from "@/lib/certificates/service";
 
 const isUuid = (s: unknown): s is string => typeof s === "string" && /^[0-9a-f-]{36}$/i.test(s);
 const c = (ctx: TenantContext) => ({ tenantId: ctx.tenant.id, userId: ctx.user.id, access: ctx.access });
@@ -116,4 +118,16 @@ export async function unassignCourseAction(fd: FormData): Promise<void> {
   const co = fd.get("courseId");
   if (isUuid(i) && isUuid(co)) await ctx.tx((tx) => svc.unassignCourse(tx, c(ctx), i, co));
   revalidatePath("/instructor/instructors");
+}
+
+export async function issueInstructorCertificateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await requirePermission("certificates.issue");
+  const i = fd.get("instructorId");
+  const co = fd.get("courseId");
+  if (!isUuid(i) || !isUuid(co)) return { error: "Choose a course." };
+  const r = await issueInstructorCertificate(systemDb(), { tenantId: ctx.tenant.id, userId: ctx.user.id }, { instructorId: i, courseId: co, hours: Number(fd.get("hours") ?? 0), note: String(fd.get("note") ?? "") });
+  if (!r.ok) return { error: r.error };
+  revalidatePath("/instructor/instructors");
+  revalidatePath("/certificates");
+  return { ok: true, message: "Instructor certificate issued. The instructor was notified." };
 }
