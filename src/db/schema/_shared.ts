@@ -70,6 +70,9 @@ export const courseDepartment = pgEnum("course_department", [
   "MEDICATION_MANAGEMENT",
   "SPECIALIZED_EDUCATION",
   "FACILITY_PROGRAM",
+  "EMERGENCY_MANAGEMENT",
+  "PUBLIC_HEALTH",
+  "CASE_MANAGEMENT",
 ]);
 /** Draft → Review → Clinical Approval → Compliance Approval → Published → Archived */
 export const contentStatus = pgEnum("content_status", [

@@ -14,9 +14,23 @@ import { hivAidsFundamentals } from "./courses/hiv-aids-fundamentals";
 import { prepPepFundamentals } from "./courses/prep-pep-fundamentals";
 import { labSpecimenCollection } from "./courses/lab-specimen-collection";
 import { floridaAlfStaffOrientation } from "./courses/florida-alf-staff-orientation";
+import { icsIntroduction } from "./courses/public-health/ics-introduction";
+import { icsInitialResponse } from "./courses/public-health/ics-initial-response";
+import { nimsIntroduction } from "./courses/public-health/nims-introduction";
+import { nrfIntroduction } from "./courses/public-health/nrf-introduction";
+import { phEmergencyResponse } from "./courses/public-health/ph-emergency-response";
+import { phFoundations } from "./courses/public-health/ph-foundations";
+import { epidemiologySurveillance } from "./courses/public-health/epidemiology-surveillance";
+import { riskCommunication } from "./courses/public-health/risk-communication";
+import { healthEquitySdoh } from "./courses/public-health/health-equity-sdoh";
+import { culturalLinguisticCompetence } from "./courses/public-health/cultural-linguistic-competence";
+import { caseManagementFundamentals } from "./courses/public-health/case-management-fundamentals";
+import { ryanWhiteCaseManagement } from "./courses/public-health/ryan-white-case-management";
+import { motivationalInterviewingTransitions } from "./courses/public-health/motivational-interviewing-transitions";
 
 /**
- * Initial launch library — the 15 priority courses of spec §24, in that order.
+ * Library: the 15 priority launch courses of spec §24, followed by the public health
+ * workforce expansion (emergency management, public health practice, case management).
  * All are AI-assisted drafts seeded as IN_REVIEW: they reach learners only after the
  * recorded Review → Clinical → Compliance approval chain by qualified reviewers.
  */
@@ -36,5 +50,19 @@ export const LIBRARY: CourseContent[] = [
   prepPepFundamentals,
   labSpecimenCollection,
   floridaAlfStaffOrientation,
+  // Public health workforce expansion
+  icsIntroduction,
+  icsInitialResponse,
+  nimsIntroduction,
+  nrfIntroduction,
+  phEmergencyResponse,
+  phFoundations,
+  epidemiologySurveillance,
+  riskCommunication,
+  healthEquitySdoh,
+  culturalLinguisticCompetence,
+  caseManagementFundamentals,
+  ryanWhiteCaseManagement,
+  motivationalInterviewingTransitions,
 ];
 export * from "./types";
