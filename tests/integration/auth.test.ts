@@ -57,6 +57,26 @@ describe("login and sessions", () => {
     if (ok.status === "locked") expect(ok.until.getTime()).toBeGreaterThan(Date.now() + (LOCKOUT_MINUTES - 1) * 60_000);
   });
 
+  it("an unknown account gives the same lock response after the same number of failures", async () => {
+    const email = `ghost-${Date.now()}@test.example`;
+    const statuses = [];
+    for (let i = 0; i < 6; i++) statuses.push((await login(systemDb(), { email, password: "Bad-Password-123!" }, meta())).status);
+    expect(statuses).toEqual(["invalid", "invalid", "invalid", "invalid", "locked", "locked"]);
+  });
+
+  it("a password reset lifts the lock so the owner can sign in at once", async () => {
+    const t = await createTenant("unlock");
+    for (let i = 0; i < 5; i++) await login(systemDb(), { email: t.adminEmail, password: "Bad-Password-123!" }, meta());
+    expect((await login(systemDb(), { email: t.adminEmail, password: PW }, meta())).status).toBe("locked");
+    consoleOutbox.length = 0;
+    await requestPasswordReset(systemDb(), t.adminEmail, meta());
+    const mail = consoleOutbox.find((m) => m.to === t.adminEmail);
+    expect(mail).toBeDefined();
+    const token = /token=([\w-]+)/.exec(mail!.text)![1];
+    expect((await resetPassword(systemDb(), token, "Unlocked-Passw0rd!x")).ok).toBe(true);
+    expect((await login(systemDb(), { email: t.adminEmail, password: "Unlocked-Passw0rd!x" }, meta())).status).toBe("ok");
+  });
+
   it("rate limiter blocks after the limit within a window and reports retry time", async () => {
     const key = `test:${Date.now()}`;
     const results = [];

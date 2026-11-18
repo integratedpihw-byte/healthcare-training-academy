@@ -5,7 +5,8 @@
  * Design:
  *  - Opaque random session tokens in an HttpOnly cookie; only SHA-256 hashes are stored.
  *  - Absolute TTL + idle timeout; server-side revocation (logout, password reset).
- *  - Argon2id password hashing, lockout after repeated failures, per-IP and
+ *  - Argon2id password hashing, lockout after repeated failures (indistinguishable
+ *    from unknown accounts; a password reset lifts it at once), per-IP and
  *    per-account rate limits, timing equalization for unknown accounts.
  *  - TOTP multi-factor authentication; secrets encrypted at rest (AES-256-GCM).
  */
@@ -61,10 +62,14 @@ export async function login(
 
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || user.status === "DISABLED") {
+    // Unknown and disabled accounts "lock" after the same number of failures as real ones,
+    // and take the same time, so responses do not reveal whether an account exists.
     await burnPasswordCheck(input.password);
-    return { status: "invalid" };
+    const fails = await rateLimit(db, `login:fail:${email}`, MAX_FAILED_LOGINS - 1, LOCKOUT_MINUTES * 60);
+    return fails.allowed ? { status: "invalid" } : { status: "locked", until: new Date(Date.now() + fails.retryAfterSeconds * 1000) };
   }
   if (user.lockedUntil && user.lockedUntil > new Date()) {
+    await burnPasswordCheck(input.password);
     return { status: "locked", until: user.lockedUntil };
   }
 

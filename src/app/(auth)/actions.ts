@@ -46,7 +46,9 @@ export async function loginAction(_: FormState, fd: FormData): Promise<FormState
       await setSessionCookie(r.token);
       redirect(`/login/mfa?next=${encodeURIComponent(safeNext(fd.get("next")))}`);
     case "locked":
-      return { error: `Too many failed attempts. This account is locked until ${r.until.toLocaleTimeString("en-US", { timeStyle: "short", timeZone: "America/New_York" }) + " ET"}.`, values: formValues(fd) };
+      // Same wording whether or not the account exists. A password reset lifts the lock at once,
+      // so someone repeating wrong passwords cannot keep the real owner out.
+      return { error: `Too many failed attempts. Try again after ${r.until.toLocaleTimeString("en-US", { timeStyle: "short", timeZone: "America/New_York" }) + " ET"}, or reset your password to sign in now.`, values: formValues(fd) };
     case "rate_limited":
       return { error: `Too many sign-in attempts. Try again in ${Math.ceil(r.retryAfterSeconds / 60)} minute(s).`, values: formValues(fd) };
     default:
